@@ -27,6 +27,13 @@ defmodule PantryWeb.UserAdminLive do
         module: Backpex.Fields.Text,
         label: "Email"
       },
+      households: %{
+        module: Backpex.Fields.HasMany,
+        label: "Households",
+        display_field: :name,
+        live_resource: PantryWeb.HouseholdAdminLive,
+        sort_by: :name
+      },
       confirmed_at: %{
         module: Backpex.Fields.DateTime,
         label: "Confirmed At"

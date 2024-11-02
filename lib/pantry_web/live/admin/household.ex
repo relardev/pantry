@@ -26,6 +26,13 @@ defmodule PantryWeb.HouseholdAdminLive do
       name: %{
         module: Backpex.Fields.Text,
         label: "Name"
+      },
+      users: %{
+        module: Backpex.Fields.HasMany,
+        label: "Users",
+        display_field: :email,
+        live_resource: PantryWeb.UserAdminLive,
+        sort_by: :email
       }
     ]
   end
