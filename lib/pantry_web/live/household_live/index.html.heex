@@ -1,0 +1,41 @@
+<.header>
+  Listing Households
+  <:actions>
+    <.link patch={~p"/households/new"}>
+      <.button>New Household</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="households"
+  rows={@streams.households}
+  row_click={fn {_id, household} -> JS.navigate(~p"/households/#{household}") end}
+>
+  <:col :let={{_id, household}} label="Name"><%= household.name %></:col>
+  <:action :let={{_id, household}}>
+    <div class="sr-only">
+      <.link navigate={~p"/households/#{household}"}>Show</.link>
+    </div>
+    <.link patch={~p"/households/#{household}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, household}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: household.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="household-modal" show on_cancel={JS.patch(~p"/households")}>
+  <.live_component
+    module={PantryWeb.HouseholdLive.FormComponent}
+    id={@household.id || :new}
+    title={@page_title}
+    action={@live_action}
+    household={@household}
+    patch={~p"/households"}
+  />
+</.modal>

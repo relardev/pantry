@@ -82,4 +82,25 @@ defmodule PantryWeb.Router do
       live "/users/confirm", UserConfirmationInstructionsLive, :new
     end
   end
+
+  scope "/", PantryWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :house,
+      on_mount: [{PantryWeb.UserAuth, :ensure_authenticated}] do
+      live "/households", HouseholdLive.Index, :index
+      live "/households/new", HouseholdLive.Index, :new
+      live "/households/:id/edit", HouseholdLive.Index, :edit
+
+      live "/households/:id", HouseholdLive.Show, :show
+      live "/households/:id/show/edit", HouseholdLive.Show, :edit
+
+      live "/households_users", HouseholdUserLive.Index, :index
+      live "/households_users/new", HouseholdUserLive.Index, :new
+      live "/households_users/:id/edit", HouseholdUserLive.Index, :edit
+
+      live "/households_users/:id", HouseholdUserLive.Show, :show
+      live "/households_users/:id/show/edit", HouseholdUserLive.Show, :edit
+    end
+  end
 end

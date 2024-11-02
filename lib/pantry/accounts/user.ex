@@ -9,6 +9,7 @@ defmodule Pantry.Accounts.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    many_to_many :households, Pantry.House.Household, join_through: Pantry.House.HouseholdUser
 
     timestamps(type: :utc_datetime)
   end
