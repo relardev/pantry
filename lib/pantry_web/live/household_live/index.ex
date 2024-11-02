@@ -6,7 +6,7 @@ defmodule PantryWeb.HouseholdLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, stream(socket, :households, House.list_households())}
+    {:ok, stream(socket, :households, House.list_households(socket.assigns.current_user.id))}
   end
 
   @impl true
@@ -17,7 +17,7 @@ defmodule PantryWeb.HouseholdLive.Index do
   defp apply_action(socket, :edit, %{"id" => id}) do
     socket
     |> assign(:page_title, "Edit Household")
-    |> assign(:household, House.get_household!(id))
+    |> assign(:household, House.get_household!(id, socket.assigns.current_user.id))
   end
 
   defp apply_action(socket, :new, _params) do
@@ -39,7 +39,7 @@ defmodule PantryWeb.HouseholdLive.Index do
 
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
-    household = House.get_household!(id)
+    household = House.get_household!(id, socket.assigns.current_user.id)
     {:ok, _} = House.delete_household(household)
 
     {:noreply, stream_delete(socket, :households, household)}

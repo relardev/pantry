@@ -29,12 +29,18 @@
   </:action>
 </.table>
 
-<.modal :if={@live_action in [:new, :edit]} id="household-modal" show on_cancel={JS.patch(~p"/households")}>
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="household-modal"
+  show
+  on_cancel={JS.patch(~p"/households")}
+>
   <.live_component
     module={PantryWeb.HouseholdLive.FormComponent}
     id={@household.id || :new}
     title={@page_title}
     action={@live_action}
+    user_id={@current_user.id}
     household={@household}
     patch={~p"/households"}
   />

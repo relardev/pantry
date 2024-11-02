@@ -13,7 +13,7 @@ defmodule PantryWeb.HouseholdLive.Show do
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
-     |> assign(:household, House.get_household!(id))}
+     |> assign(:household, House.get_household!(id, socket.assigns.current_user.id))}
   end
 
   defp page_title(:show), do: "Show Household"

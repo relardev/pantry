@@ -5,7 +5,6 @@ defmodule Pantry.House.HouseholdUser do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "households_users" do
-
     field :user_id, :binary_id
     field :household_id, :binary_id
 
@@ -15,7 +14,7 @@ defmodule Pantry.House.HouseholdUser do
   @doc false
   def changeset(household_user, attrs) do
     household_user
-    |> cast(attrs, [])
+    |> cast(attrs, [:user_id, :household_id])
     |> validate_required([])
   end
 end

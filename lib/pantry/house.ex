@@ -7,6 +7,7 @@ defmodule Pantry.House do
   alias Pantry.Repo
 
   alias Pantry.House.Household
+  alias Pantry.House.HouseholdUser
 
   @doc """
   Returns the list of households.
@@ -17,8 +18,9 @@ defmodule Pantry.House do
       [%Household{}, ...]
 
   """
-  def list_households do
-    Repo.all(Household)
+  def list_households(user_id) do
+    household_for_user(user_id)
+    |> Repo.all()
   end
 
   @doc """
@@ -35,7 +37,10 @@ defmodule Pantry.House do
       ** (Ecto.NoResultsError)
 
   """
-  def get_household!(id), do: Repo.get!(Household, id)
+  def get_household!(id, user_id) do
+    household_for_user(user_id)
+    |> Repo.get!(id)
+  end
 
   @doc """
   Creates a household.
@@ -55,6 +60,17 @@ defmodule Pantry.House do
     |> Repo.insert()
   end
 
+  def create_household_for_user(user_id, attrs \\ %{}) do
+    Repo.transaction(fn ->
+      with {:ok, household} <- create_household(attrs),
+           {:ok, _} <- create_household_user(%{household_id: household.id, user_id: user_id}) do
+        household
+      else
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
+
   @doc """
   Updates a household.
 
@@ -71,6 +87,27 @@ defmodule Pantry.House do
     household
     |> Household.changeset(attrs)
     |> Repo.update()
+  end
+
+  def user_has_access_to_household?(household_id, user_id) do
+    from(
+      hu in HouseholdUser,
+      where: hu.household_id == ^household_id,
+      where: hu.user_id == ^user_id,
+      select: count(hu.id)
+    )
+    |> Repo.one!() > 0
+  end
+
+  def update_household_for_user(%Household{} = household, user_id, attrs) do
+    Repo.transaction(fn ->
+      with true <- user_has_access_to_household?(household.id, user_id),
+           {:ok, updated} <- update_household(household, attrs) do
+        updated
+      else
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
   end
 
   @doc """
@@ -196,5 +233,11 @@ defmodule Pantry.House do
   """
   def change_household_user(%HouseholdUser{} = household_user, attrs \\ %{}) do
     HouseholdUser.changeset(household_user, attrs)
+  end
+
+  defp household_for_user(user_id) do
+    Household
+    |> join(:inner, [h], hu in assoc(h, :users))
+    |> where([h, hu], hu.id == ^user_id)
   end
 end
