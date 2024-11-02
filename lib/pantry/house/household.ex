@@ -17,4 +17,12 @@ defmodule Pantry.House.Household do
     |> cast(attrs, [:name])
     |> validate_required([:name])
   end
+
+  def update_changeset(household, attrs, _opts) do
+    changeset(household, attrs)
+  end
+
+  def create_changeset(household, attrs, _opts) do
+    changeset(household, attrs)
+  end
 end

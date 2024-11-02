@@ -103,4 +103,19 @@ defmodule PantryWeb.Router do
       live "/households_users/:id/show/edit", HouseholdUserLive.Show, :edit
     end
   end
+
+  import Backpex.Router
+
+  scope "/admin", PantryWeb do
+    pipe_through :browser
+
+    backpex_routes()
+
+    live_session :default, on_mount: Backpex.InitAssigns do
+      live_resources "/households", HouseholdAdminLive
+      live_resources "/users", UserAdminLive
+    end
+
+    get "/", Redirect, to: "/admin/households"
+  end
 end

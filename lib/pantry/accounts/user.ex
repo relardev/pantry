@@ -160,4 +160,14 @@ defmodule Pantry.Accounts.User do
       add_error(changeset, :current_password, "is not valid")
     end
   end
+
+  def update_changeset(user, attrs, _opts) do
+    user
+    |> cast(attrs, [:email])
+    |> validate_email([])
+  end
+
+  def create_changeset(user, attrs, _opts) do
+    registration_changeset(user, attrs)
+  end
 end

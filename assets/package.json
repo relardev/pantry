@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "alpinejs": "^3.14.3"
+  },
+  "devDependencies": {
+    "daisyui": "^4.12.14"
+  }
+}

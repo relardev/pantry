@@ -9,7 +9,8 @@ module.exports = {
   content: [
     "./js/**/*.js",
     "../lib/pantry_web.ex",
-    "../lib/pantry_web/**/*.*ex"
+    "../lib/pantry_web/**/*.*ex",
+    '../deps/backpex/**/*.*ex'
   ],
   theme: {
     extend: {
@@ -19,7 +20,6 @@ module.exports = {
     },
   },
   plugins: [
-    require("@tailwindcss/forms"),
     // Allows prefixing tailwind classes with LiveView classes to add rules
     // only when LiveView classes are applied, for example:
     //
@@ -69,6 +69,10 @@ module.exports = {
           }
         }
       }, {values})
-    })
+    }),
+    // For backplex
+    require('daisyui'),
+    // removed the forms since it collides with daisyui? (https://hexdocs.pm/backpex/installation.html#remove-tailwindcss-forms-plugin)
+    // require("@tailwindcss/forms"),
   ]
 }
