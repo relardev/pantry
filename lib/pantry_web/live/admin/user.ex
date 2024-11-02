@@ -27,6 +27,10 @@ defmodule PantryWeb.UserAdminLive do
         module: Backpex.Fields.Text,
         label: "Email"
       },
+      admin: %{
+        module: Backpex.Fields.Boolean,
+        label: "Admin"
+      },
       households: %{
         module: Backpex.Fields.HasMany,
         label: "Households",

@@ -201,16 +201,31 @@ defmodule PantryWeb.UserAuth do
   If you want to enforce the user email is confirmed before
   they use the application at all, here would be a good place.
   """
+
+  def require_authenticated_user(conn, admin: true) do
+    user = conn.assigns[:current_user]
+
+    if user && user.admin do
+      conn
+    else
+      handle_not_authenticated(conn, "You must be logged in as an admin to access this page.")
+    end
+  end
+
   def require_authenticated_user(conn, _opts) do
     if conn.assigns[:current_user] do
       conn
     else
-      conn
-      |> put_flash(:error, "You must log in to access this page.")
-      |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log_in")
-      |> halt()
+      handle_not_authenticated(conn, "You must log in to access this page.")
     end
+  end
+
+  defp handle_not_authenticated(conn, msg) do
+    conn
+    |> put_flash(:error, msg)
+    |> maybe_store_return_to()
+    |> redirect(to: ~p"/users/log_in")
+    |> halt()
   end
 
   defp put_token_in_session(conn, token) do

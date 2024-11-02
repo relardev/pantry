@@ -13,6 +13,10 @@ defmodule PantryWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :admin do
+    plug :require_authenticated_user, admin: true
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -107,7 +111,7 @@ defmodule PantryWeb.Router do
   import Backpex.Router
 
   scope "/admin", PantryWeb do
-    pipe_through :browser
+    pipe_through [:browser, :admin]
 
     backpex_routes()
 

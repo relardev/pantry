@@ -9,6 +9,8 @@ defmodule Pantry.Accounts.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    field :admin, :boolean, default: false
+
     many_to_many :households, Pantry.House.Household, join_through: Pantry.House.HouseholdUser
 
     timestamps(type: :utc_datetime)
@@ -55,7 +57,7 @@ defmodule Pantry.Accounts.User do
   defp validate_password(changeset, opts) do
     changeset
     |> validate_required([:password])
-    |> validate_length(:password, min: 12, max: 72)
+    |> validate_length(:password, min: 4, max: 72)
     # Examples of additional password validation:
     # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
@@ -163,7 +165,7 @@ defmodule Pantry.Accounts.User do
 
   def update_changeset(user, attrs, _opts) do
     user
-    |> cast(attrs, [:email])
+    |> cast(attrs, [:email, :admin])
     |> validate_email([])
   end
 
