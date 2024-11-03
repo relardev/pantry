@@ -218,6 +218,8 @@ defmodule Pantry.House do
   def create_invite(email, sender_user_id, household_id) do
     Repo.transaction(fn ->
       with invited_user <- Pantry.Accounts.get_user_by_email(email),
+           true <- invited_user != nil,
+           true <- invited_user.id != sender_user_id,
            {:ok, invite} <-
              %Invite{}
              |> Invite.changeset(%{
@@ -229,7 +231,7 @@ defmodule Pantry.House do
         invite
       else
         {:error, _changeset} -> Repo.rollback("failed to create invite")
-        nil -> Repo.rollback(:user_not_found)
+        false -> Repo.rollback(:user_not_found)
       end
     end)
   end
