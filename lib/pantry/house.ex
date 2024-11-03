@@ -60,7 +60,7 @@ defmodule Pantry.House do
     |> Repo.insert()
   end
 
-  def create_household_for_user(user_id, attrs \\ %{}) do
+  def create_household_for_user(attrs, user_id) do
     Repo.transaction(fn ->
       with {:ok, household} <- create_household(attrs),
            {:ok, _} <- create_household_user(%{household_id: household.id, user_id: user_id}) do
@@ -142,35 +142,6 @@ defmodule Pantry.House do
   alias Pantry.House.HouseholdUser
 
   @doc """
-  Returns the list of households_users.
-
-  ## Examples
-
-      iex> list_households_users()
-      [%HouseholdUser{}, ...]
-
-  """
-  def list_households_users do
-    Repo.all(HouseholdUser)
-  end
-
-  @doc """
-  Gets a single household_user.
-
-  Raises `Ecto.NoResultsError` if the Household user does not exist.
-
-  ## Examples
-
-      iex> get_household_user!(123)
-      %HouseholdUser{}
-
-      iex> get_household_user!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_household_user!(id), do: Repo.get!(HouseholdUser, id)
-
-  @doc """
   Creates a household_user.
 
   ## Examples
@@ -186,53 +157,6 @@ defmodule Pantry.House do
     %HouseholdUser{}
     |> HouseholdUser.changeset(attrs)
     |> Repo.insert()
-  end
-
-  @doc """
-  Updates a household_user.
-
-  ## Examples
-
-      iex> update_household_user(household_user, %{field: new_value})
-      {:ok, %HouseholdUser{}}
-
-      iex> update_household_user(household_user, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_household_user(%HouseholdUser{} = household_user, attrs) do
-    household_user
-    |> HouseholdUser.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a household_user.
-
-  ## Examples
-
-      iex> delete_household_user(household_user)
-      {:ok, %HouseholdUser{}}
-
-      iex> delete_household_user(household_user)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_household_user(%HouseholdUser{} = household_user) do
-    Repo.delete(household_user)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking household_user changes.
-
-  ## Examples
-
-      iex> change_household_user(household_user)
-      %Ecto.Changeset{data: %HouseholdUser{}}
-
-  """
-  def change_household_user(%HouseholdUser{} = household_user, attrs \\ %{}) do
-    HouseholdUser.changeset(household_user, attrs)
   end
 
   defp household_for_user(user_id) do

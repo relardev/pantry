@@ -3,18 +3,41 @@ defmodule PantryWeb.HouseholdLiveTest do
 
   import Phoenix.LiveViewTest
   import Pantry.HouseFixtures
+  import Pantry.AccountsFixtures
 
   @create_attrs %{name: "some name"}
   @update_attrs %{name: "some updated name"}
   @invalid_attrs %{name: nil}
+  @remember_me_cookie "_pantry_web_user_remember_me"
 
-  defp create_household(_) do
-    household = household_fixture()
+  defp create_household(%{conn: conn}) do
+    household = household_for_user_fixture(conn.assigns.current_user.id, %{})
     %{household: household}
   end
 
+  defp log_in(%{conn: conn}) do
+    conn =
+      conn
+      |> Map.replace!(:secret_key_base, PantryWeb.Endpoint.config(:secret_key_base))
+      |> init_test_session(%{})
+
+    user = user_fixture()
+
+    logged_in_conn =
+      conn |> fetch_cookies() |> PantryWeb.UserAuth.log_in_user(user, %{"remember_me" => "true"})
+
+    %{value: signed_token} = logged_in_conn.resp_cookies[@remember_me_cookie]
+
+    conn =
+      conn
+      |> put_req_cookie(@remember_me_cookie, signed_token)
+      |> PantryWeb.UserAuth.fetch_current_user([])
+
+    %{conn: conn}
+  end
+
   describe "Index" do
-    setup [:create_household]
+    setup [:log_in, :create_household]
 
     test "lists all households", %{conn: conn, household: household} do
       {:ok, _index_live, html} = live(conn, ~p"/households")
@@ -78,7 +101,7 @@ defmodule PantryWeb.HouseholdLiveTest do
   end
 
   describe "Show" do
-    setup [:create_household]
+    setup [:log_in, :create_household]
 
     test "displays household", %{conn: conn, household: household} do
       {:ok, _show_live, html} = live(conn, ~p"/households/#{household}")

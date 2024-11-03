@@ -15,6 +15,6 @@ defmodule Pantry.House.HouseholdUser do
   def changeset(household_user, attrs) do
     household_user
     |> cast(attrs, [:user_id, :household_id])
-    |> validate_required([])
+    |> validate_required([:user_id, :household_id])
   end
 end

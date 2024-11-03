@@ -95,16 +95,11 @@ defmodule PantryWeb.Router do
       live "/households", HouseholdLive.Index, :index
       live "/households/new", HouseholdLive.Index, :new
       live "/households/:id/edit", HouseholdLive.Index, :edit
+      live "/households/:id/invite", HouseholdLive.Index, :invite
 
       live "/households/:id", HouseholdLive.Show, :show
       live "/households/:id/show/edit", HouseholdLive.Show, :edit
-
-      live "/households_users", HouseholdUserLive.Index, :index
-      live "/households_users/new", HouseholdUserLive.Index, :new
-      live "/households_users/:id/edit", HouseholdUserLive.Index, :edit
-
-      live "/households_users/:id", HouseholdUserLive.Show, :show
-      live "/households_users/:id/show/edit", HouseholdUserLive.Show, :edit
+      live "/households/:id/show/invite", HouseholdLive.Index, :invite
     end
   end
 

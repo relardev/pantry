@@ -68,7 +68,7 @@ defmodule PantryWeb.HouseholdLive.FormComponent do
   end
 
   defp save_household(socket, :new, household_params) do
-    case House.create_household_for_user(socket.assigns.user_id, household_params) do
+    case House.create_household_for_user(household_params, socket.assigns.user_id) do
       {:ok, household} ->
         notify_parent({:saved, household})
 

@@ -20,6 +20,12 @@ defmodule PantryWeb.HouseholdLive.Index do
     |> assign(:household, House.get_household!(id, socket.assigns.current_user.id))
   end
 
+  defp apply_action(socket, :invite, %{"id" => id}) do
+    socket
+    |> assign(:page_title, "Invite to Household")
+    |> assign(:household, House.get_household!(id, socket.assigns.current_user.id))
+  end
+
   defp apply_action(socket, :new, _params) do
     socket
     |> assign(:page_title, "New Household")
