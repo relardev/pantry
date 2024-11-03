@@ -230,8 +230,11 @@ defmodule Pantry.House do
              |> Repo.insert() do
         invite
       else
-        {:error, _changeset} -> Repo.rollback("failed to create invite")
-        false -> Repo.rollback(:user_not_found)
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+
+        false ->
+          Repo.rollback(:user_not_found)
       end
     end)
   end

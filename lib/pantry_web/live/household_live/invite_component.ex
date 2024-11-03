@@ -52,8 +52,8 @@ defmodule PantryWeb.HouseholdLive.InviteComponent do
       {:error, :user_not_found} ->
         success(socket)
 
-      {:error, _} ->
-        {:noreply, socket}
+      {:error, _chageset} ->
+        success(socket)
     end
   end
 

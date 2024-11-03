@@ -17,6 +17,9 @@ defmodule Pantry.House.Invite do
     invite
     |> cast(attrs, [:sender_user_id, :invited_user_id, :household_id])
     |> validate_required([:sender_user_id, :invited_user_id, :household_id])
+    |> unique_constraint([:invited_user, :household],
+      name: "invites_invited_user_id_household_id_index"
+    )
   end
 
   def update_changeset(invite, attrs, _opts) do
