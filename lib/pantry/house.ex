@@ -164,4 +164,102 @@ defmodule Pantry.House do
     |> join(:inner, [h], hu in assoc(h, :users))
     |> where([h, hu], hu.id == ^user_id)
   end
+
+  alias Pantry.House.Invite
+
+  @doc """
+  Returns the list of invites.
+
+  ## Examples
+
+      iex> list_invites()
+      [%Invite{}, ...]
+
+  """
+  def list_invites(user_id) do
+    Invite
+    |> where([i], i.invited_user_id == ^user_id)
+    |> preload([:sender_user, :invited_user, :household])
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single invite.
+
+  Raises `Ecto.NoResultsError` if the Invite does not exist.
+
+  ## Examples
+
+      iex> get_invite!(123)
+      %Invite{}
+
+      iex> get_invite!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_invite!(id, user_id) do
+    Invite
+    |> where([i], i.invited_user_id == ^user_id)
+    |> Repo.get!(id)
+  end
+
+  @doc """
+  Creates a invite.
+
+  ## Examples
+
+      iex> create_invite(%{field: value})
+      {:ok, %Invite{}}
+
+      iex> create_invite(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_invite(email, sender_user_id, household_id) do
+    Repo.transaction(fn ->
+      with invited_user <- Pantry.Accounts.get_user_by_email(email),
+           {:ok, invite} <-
+             %Invite{}
+             |> Invite.changeset(%{
+               sender_user_id: sender_user_id,
+               invited_user_id: invited_user.id,
+               household_id: household_id
+             })
+             |> Repo.insert() do
+        invite
+      else
+        {:error, _changeset} -> Repo.rollback("failed to create invite")
+        nil -> Repo.rollback(:user_not_found)
+      end
+    end)
+  end
+
+  @doc """
+  Deletes a invite.
+
+  ## Examples
+
+      iex> delete_invite(invite)
+      {:ok, %Invite{}}
+
+      iex> delete_invite(invite)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_invite(%Invite{} = invite) do
+    Repo.delete(invite)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking invite changes.
+
+  ## Examples
+
+      iex> change_invite(invite)
+      %Ecto.Changeset{data: %Invite{}}
+
+  """
+  def change_invite(%Invite{} = invite, attrs \\ %{}) do
+    Invite.changeset(invite, attrs)
+  end
 end

@@ -100,6 +100,13 @@ defmodule PantryWeb.Router do
       live "/households/:id", HouseholdLive.Show, :show
       live "/households/:id/show/edit", HouseholdLive.Show, :edit
       live "/households/:id/show/invite", HouseholdLive.Index, :invite
+
+      live "/invites", InviteLive.Index, :index
+      live "/invites/new", InviteLive.Index, :new
+      live "/invites/:id/edit", InviteLive.Index, :edit
+
+      live "/invites/:id", InviteLive.Show, :show
+      live "/invites/:id/show/edit", InviteLive.Show, :edit
     end
   end
 
@@ -113,6 +120,7 @@ defmodule PantryWeb.Router do
     live_session :default, on_mount: Backpex.InitAssigns do
       live_resources "/households", HouseholdAdminLive
       live_resources "/users", UserAdminLive
+      live_resources "/invites", InviteAdminLive
     end
 
     get "/", Redirect, to: "/admin/households"

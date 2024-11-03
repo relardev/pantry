@@ -48,3 +48,19 @@
     patch={~p"/households"}
   />
 </.modal>
+<.modal
+  :if={@live_action == :invite}
+  id="household-modal"
+  show
+  on_cancel={JS.patch(~p"/households")}
+>
+  <.live_component
+    module={PantryWeb.HouseholdLive.InviteComponent}
+    id={@household.id}
+    title={@page_title}
+    action={@live_action}
+    user_id={@current_user.id}
+    household_id={@household.id}
+    patch={~p"/households"}
+  />
+</.modal>

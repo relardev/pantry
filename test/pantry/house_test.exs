@@ -72,4 +72,41 @@ defmodule Pantry.HouseTest do
       assert %Ecto.Changeset{} = House.change_household(household)
     end
   end
+
+  describe "invites" do
+    alias Pantry.House.Invite
+
+    import Pantry.HouseFixtures
+
+    @invalid_attrs %{}
+
+    test "list_invites/0 returns all invites" do
+      {invite, sender, invited} = invite_preloaded_fixture()
+      assert House.list_invites(invited.id) == [invite]
+    end
+
+    test "get_invite!/1 returns the invite with given id" do
+      {invite, sender, invited} = invite_fixture()
+      assert House.get_invite!(invite.id, invited.id) == invite
+    end
+
+    test "create_invite/1 with valid data creates a invite" do
+      {household, sender} = household_fixture()
+      invited = Pantry.AccountsFixtures.user_fixture()
+
+      assert {:ok, %Invite{}} =
+               House.create_invite(invited.email, sender.id, household.id)
+    end
+
+    test "delete_invite/1 deletes the invite by invited" do
+      {invite, _sender, invited} = invite_fixture()
+      assert {:ok, %Invite{}} = House.delete_invite(invite)
+      assert_raise Ecto.NoResultsError, fn -> House.get_invite!(invite.id, invited.id) end
+    end
+
+    test "change_invite/1 returns a invite changeset" do
+      {invite, _sender, _invited} = invite_fixture()
+      assert %Ecto.Changeset{} = House.change_invite(invite)
+    end
+  end
 end

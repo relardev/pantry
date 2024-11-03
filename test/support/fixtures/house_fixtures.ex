@@ -1,4 +1,6 @@
 defmodule Pantry.HouseFixtures do
+  alias Pantry.Repo
+
   @moduledoc """
   This module defines test helpers for creating
   entities via the `Pantry.House` context.
@@ -39,4 +41,35 @@ defmodule Pantry.HouseFixtures do
   end
 
   def binary_id, do: Ecto.UUID.generate()
+
+  @doc """
+  Generate a invite.
+  """
+  def invite_fixture() do
+    invited = Pantry.AccountsFixtures.user_fixture()
+
+    {invite, sender} = invite_for_user_fixture(invited.email)
+    {invite, sender, invited}
+  end
+
+  def invite_for_user_fixture(email) do
+    {household, sender} = household_fixture()
+
+    {:ok, invite} =
+      Pantry.House.create_invite(email, sender.id, household.id)
+
+    {invite, sender}
+  end
+
+  def invite_preloaded_fixture() do
+    {invite, sender, invited} = invite_fixture()
+
+    invite =
+      invite
+      |> Repo.preload(:sender_user)
+      |> Repo.preload(:invited_user)
+      |> Repo.preload(:household)
+
+    {invite, sender, invited}
+  end
 end

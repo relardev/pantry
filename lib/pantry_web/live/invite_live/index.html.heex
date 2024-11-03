@@ -1,0 +1,16 @@
+<.header>
+  Listing Invites
+</.header>
+
+<.table id="invites" rows={@streams.invites}>
+  <:col :let={{_id, invite}} label="House"><%= invite.household.name %></:col>
+  <:col :let={{_id, invite}} label="From"><%= invite.sender_user.email %></:col>
+  <:action :let={{id, invite}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: invite.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
