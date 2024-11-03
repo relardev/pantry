@@ -3,8 +3,23 @@ defmodule PantryWeb.InviteLive.Index do
 
   alias Pantry.House
 
+  def notify_new_invite(email, invite) do
+    Phoenix.PubSub.broadcast(Pantry.PubSub, topic(email), {
+      :new_invite,
+      invite
+    })
+  end
+
+  defp topic(email) do
+    "invite:#{email}"
+  end
+
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Pantry.PubSub, topic(socket.assigns.current_user.email))
+    end
+
     {:ok, stream(socket, :invites, House.list_invites(socket.assigns.current_user.id))}
   end
 
@@ -14,5 +29,10 @@ defmodule PantryWeb.InviteLive.Index do
     {:ok, _} = House.delete_invite(invite)
 
     {:noreply, stream_delete(socket, :invites, invite)}
+  end
+
+  @impl true
+  def handle_info({:new_invite, invite}, socket) do
+    {:noreply, stream_insert(socket, :invites, invite)}
   end
 end

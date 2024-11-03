@@ -215,7 +215,7 @@ defmodule Pantry.House do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_invite(email, sender_user_id, household_id) do
+  def create_invite(email, sender_user_id, household_id, opts \\ []) do
     Repo.transaction(fn ->
       with invited_user <- Pantry.Accounts.get_user_by_email(email),
            true <- invited_user != nil,
@@ -228,7 +228,15 @@ defmodule Pantry.House do
                household_id: household_id
              })
              |> Repo.insert() do
-        invite
+        preload = Keyword.get(opts, :preload, nil)
+
+        if preload do
+          Enum.reduce(preload, invite, fn field, acc ->
+            Repo.preload(acc, field)
+          end)
+        else
+          invite
+        end
       else
         {:error, changeset} ->
           Repo.rollback(changeset)

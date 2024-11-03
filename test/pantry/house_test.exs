@@ -7,7 +7,6 @@ defmodule Pantry.HouseTest do
     alias Pantry.House.Household
 
     import Pantry.HouseFixtures
-
     @invalid_attrs %{name: nil}
 
     test "list_households/0 returns all households" do
@@ -78,15 +77,13 @@ defmodule Pantry.HouseTest do
 
     import Pantry.HouseFixtures
 
-    @invalid_attrs %{}
-
     test "list_invites/0 returns all invites" do
-      {invite, sender, invited} = invite_preloaded_fixture()
+      {invite, _sender, invited} = invite_preloaded_fixture()
       assert House.list_invites(invited.id) == [invite]
     end
 
     test "get_invite!/1 returns the invite with given id" do
-      {invite, sender, invited} = invite_fixture()
+      {invite, _sender, invited} = invite_fixture()
       assert House.get_invite!(invite.id, invited.id) == invite
     end
 

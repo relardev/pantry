@@ -45,8 +45,11 @@ defmodule PantryWeb.HouseholdLive.InviteComponent do
   end
 
   def handle_event("invite", %{"email" => email}, socket) do
-    case House.create_invite(email, socket.assigns.user_id, socket.assigns.household_id) do
-      {:ok, _invite} ->
+    case House.create_invite(email, socket.assigns.user_id, socket.assigns.household_id,
+           preload: [:sender_user, :household]
+         ) do
+      {:ok, invite} ->
+        PantryWeb.InviteLive.Index.notify_new_invite(email, invite)
         success(socket)
 
       {:error, :user_not_found} ->
