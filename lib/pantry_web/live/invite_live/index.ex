@@ -31,6 +31,17 @@ defmodule PantryWeb.InviteLive.Index do
     {:noreply, stream_delete(socket, :invites, invite)}
   end
 
+  def handle_event("accept", %{"id" => id}, socket) do
+    household_user = House.accept_invite!(id, socket.assigns.current_user.id)
+
+    household = House.get_household!(household_user.household_id, socket.assigns.current_user.id)
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "Welcome to #{household.name}")
+     |> push_navigate(to: ~p"/households/#{household.id}")}
+  end
+
   @impl true
   def handle_info({:new_invite, invite}, socket) do
     {:noreply, stream_insert(socket, :invites, invite)}

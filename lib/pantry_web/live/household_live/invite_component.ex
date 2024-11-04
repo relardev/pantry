@@ -55,6 +55,12 @@ defmodule PantryWeb.HouseholdLive.InviteComponent do
       {:error, :user_not_found} ->
         success(socket)
 
+      {:error, :already_member} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "User is a member already")
+         |> push_patch(to: socket.assigns.patch)}
+
       {:error, _chageset} ->
         success(socket)
     end

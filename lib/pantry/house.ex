@@ -165,6 +165,19 @@ defmodule Pantry.House do
     |> where([h, hu], hu.id == ^user_id)
   end
 
+  def get_household_user(household_id, user_id) do
+    from(
+      hu in HouseholdUser,
+      where: hu.household_id == ^household_id,
+      where: hu.user_id == ^user_id
+    )
+    |> Repo.one()
+  end
+
+  def delete_household_user(%HouseholdUser{} = household_user) do
+    Repo.delete(household_user)
+  end
+
   alias Pantry.House.Invite
 
   @doc """
@@ -220,6 +233,7 @@ defmodule Pantry.House do
       with invited_user <- Pantry.Accounts.get_user_by_email(email),
            true <- invited_user != nil,
            true <- invited_user.id != sender_user_id,
+           nil <- get_household_user(household_id, invited_user.id),
            {:ok, invite} <-
              %Invite{}
              |> Invite.changeset(%{
@@ -243,6 +257,9 @@ defmodule Pantry.House do
 
         false ->
           Repo.rollback(:user_not_found)
+
+        %HouseholdUser{} ->
+          Repo.rollback(:already_member)
       end
     end)
   end
@@ -274,5 +291,22 @@ defmodule Pantry.House do
   """
   def change_invite(%Invite{} = invite, attrs \\ %{}) do
     Invite.changeset(invite, attrs)
+  end
+
+  def accept_invite!(id, user_id) do
+    {:ok, household_user} =
+      Repo.transaction(fn ->
+        with invite <- get_invite!(id, user_id),
+             {:ok, household_user} <-
+               create_household_user(%{
+                 household_id: invite.household_id,
+                 user_id: user_id
+               }),
+             {:ok, _} <- delete_invite(invite) do
+          household_user
+        end
+      end)
+
+    household_user
   end
 end
