@@ -350,4 +350,18 @@ defmodule Pantry.Accounts do
       {:error, :user, changeset, _} -> {:error, changeset}
     end
   end
+
+  def activate_household(user, household_id) do
+    Repo.transaction(fn ->
+      with true <- Pantry.House.user_has_access_to_household?(household_id, user.id),
+           {:ok, user} <-
+             User.activate_household_changeset(user, household_id)
+             |> Repo.update() do
+        user
+      else
+        {:error, changeset} -> Repo.rollback(changeset)
+        false -> Repo.rollback("User does not have access to household")
+      end
+    end)
+  end
 end

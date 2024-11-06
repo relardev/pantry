@@ -17,6 +17,9 @@ defmodule Pantry.Application do
       # Start a worker by calling: Pantry.Worker.start_link(arg)
       # {Pantry.Worker, arg},
       # Start to serve requests, typically the last entry
+
+      Pantry.Stockpile.HouseholdRegistry,
+      Pantry.Stockpile.Household.supervisor_spec(),
       PantryWeb.Endpoint
     ]
 

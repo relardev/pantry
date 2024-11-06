@@ -50,4 +50,10 @@ defmodule PantryWeb.HouseholdLive.Index do
 
     {:noreply, stream_delete(socket, :households, household)}
   end
+
+  def handle_event("activate", %{"id" => id}, socket) do
+    Pantry.Accounts.activate_household(socket.assigns.current_user, id)
+
+    {:noreply, push_navigate(socket, to: ~p"/")}
+  end
 end

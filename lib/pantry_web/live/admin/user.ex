@@ -31,6 +31,13 @@ defmodule PantryWeb.UserAdminLive do
         module: Backpex.Fields.Boolean,
         label: "Admin"
       },
+      active_household: %{
+        module: Backpex.Fields.BelongsTo,
+        label: "Active Household",
+        display_field: :name,
+        live_resource: PantryWeb.HouseholdAdminLive,
+        sort_by: :name
+      },
       households: %{
         module: Backpex.Fields.HasMany,
         label: "Households",

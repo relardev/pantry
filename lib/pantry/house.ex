@@ -37,6 +37,12 @@ defmodule Pantry.House do
       ** (Ecto.NoResultsError)
 
   """
+  def get_household_with_users!(id) do
+    Household
+    |> preload(:users)
+    |> Repo.get!(id)
+  end
+
   def get_household!(id, user_id) do
     household_for_user(user_id)
     |> Repo.get!(id)
@@ -106,6 +112,7 @@ defmodule Pantry.House do
         updated
       else
         {:error, changeset} -> Repo.rollback(changeset)
+        false -> Repo.rollback(:no_access)
       end
     end)
   end

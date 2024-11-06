@@ -11,6 +11,8 @@ defmodule Pantry.Accounts.User do
     field :confirmed_at, :utc_datetime
     field :admin, :boolean, default: false
 
+    belongs_to :active_household, Pantry.House.Household
+
     many_to_many :households, Pantry.House.Household, join_through: Pantry.House.HouseholdUser
 
     timestamps(type: :utc_datetime)
@@ -171,5 +173,10 @@ defmodule Pantry.Accounts.User do
 
   def create_changeset(user, attrs, _opts) do
     registration_changeset(user, attrs)
+  end
+
+  def activate_household_changeset(user, household_id) do
+    user
+    |> change(active_household_id: household_id)
   end
 end

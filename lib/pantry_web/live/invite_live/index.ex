@@ -36,10 +36,12 @@ defmodule PantryWeb.InviteLive.Index do
 
     household = House.get_household!(household_user.household_id, socket.assigns.current_user.id)
 
+    Pantry.Accounts.activate_household(socket.assigns.current_user, id)
+
     {:noreply,
      socket
      |> put_flash(:info, "Welcome to #{household.name}")
-     |> push_navigate(to: ~p"/households/#{household.id}")}
+     |> push_navigate(to: ~p"/")}
   end
 
   @impl true

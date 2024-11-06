@@ -10,16 +10,13 @@
 <.table
   id="households"
   rows={@streams.households}
-  row_click={fn {_id, household} -> JS.navigate(~p"/households/#{household}") end}
+  row_click={fn {_id, household} -> JS.push("activate", value: %{id: household.id}) end}
 >
   <:col :let={{_id, household}} label="Name"><%= household.name %></:col>
   <:action :let={{_id, household}}>
     <.link patch={~p"/households/#{household}/invite"}>Invite Member</.link>
   </:action>
   <:action :let={{_id, household}}>
-    <div class="sr-only">
-      <.link navigate={~p"/households/#{household}"}>Show</.link>
-    </div>
     <.link patch={~p"/households/#{household}/edit"}>Edit</.link>
   </:action>
   <:action :let={{id, household}}>

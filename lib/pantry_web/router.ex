@@ -21,12 +21,6 @@ defmodule PantryWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", PantryWeb do
-    pipe_through :browser
-
-    get "/", PageController, :home
-  end
-
   # Other scopes may use custom stacks.
   # scope "/api", PantryWeb do
   #   pipe_through :api
@@ -92,6 +86,7 @@ defmodule PantryWeb.Router do
 
     live_session :house,
       on_mount: [{PantryWeb.UserAuth, :ensure_authenticated}] do
+      live "/", StockpileLive
       live "/households", HouseholdLive.Index, :index
       live "/households/new", HouseholdLive.Index, :new
       live "/households/:id/edit", HouseholdLive.Index, :edit
