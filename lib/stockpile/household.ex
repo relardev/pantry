@@ -32,4 +32,10 @@ defmodule Pantry.Stockpile.Household do
   def handle_call(:get_household, _from, household) do
     {:reply, household, household}
   end
+
+  def handle_info(:load, household) do
+    household = %{household | name: "Updated Household"}
+    Phoenix.PubSub.broadcast(Pantry.PubSub, "household:#{household.id}", {:update, household})
+    {:noreply, household}
+  end
 end
