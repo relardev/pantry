@@ -157,6 +157,16 @@ defmodule Pantry.Accounts do
     |> Ecto.Multi.delete_all(:tokens, UserToken.by_user_and_contexts_query(user, [context]))
   end
 
+  def change_user_name(user, attrs \\ %{}) do
+    User.name_changeset(user, attrs)
+  end
+
+  def update_user_name(user, attrs) do
+    changeset = user |> User.name_changeset(attrs)
+
+    Repo.update(changeset)
+  end
+
   @doc ~S"""
   Delivers the update email instructions to the given user.
 
