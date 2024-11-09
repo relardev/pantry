@@ -20,6 +20,7 @@ defmodule Pantry.Application do
 
       Pantry.Stockpile.HouseholdRegistry,
       Pantry.Stockpile.Household.supervisor_spec(),
+      PantryWeb.Presence,
       PantryWeb.Endpoint
     ]
 
