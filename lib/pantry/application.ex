@@ -19,7 +19,7 @@ defmodule Pantry.Application do
       # Start to serve requests, typically the last entry
 
       Pantry.Stockpile.HouseholdRegistry,
-      Pantry.Stockpile.Household.supervisor_spec(),
+      Pantry.Stockpile.Household.Server.supervisor_spec(),
       PantryWeb.Presence,
       PantryWeb.Endpoint
     ]

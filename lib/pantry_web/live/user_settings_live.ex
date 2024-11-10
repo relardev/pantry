@@ -180,13 +180,11 @@ defmodule PantryWeb.UserSettingsLive do
     user = socket.assigns.current_user
 
     case Accounts.update_user_name(user, user_params) do
-      {:ok, user} ->
-        name_form =
-          user
-          |> Accounts.change_user_name(user_params)
-          |> to_form()
-
-        {:noreply, assign(socket, name_form: name_form)}
+      {:ok, _user} ->
+        # redirect to reload layout so the new name is vsible
+        {:noreply,
+         socket
+         |> redirect(to: ~p"/users/settings")}
 
       {:error, changeset} ->
         {:noreply, assign(socket, name_form: to_form(changeset))}
