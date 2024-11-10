@@ -76,13 +76,12 @@ defmodule PantryWeb.OnlineUsers do
 
   attr :online_users, :list
   attr :offline_users, :list
-  attr :you, :string
 
   def list(assigns) do
     ~H"""
     online users:
     <%= for user <- @online_users do %>
-      <%= if Map.has_key?(user, :name) do %>
+      <%= if Map.get(user, :name) != nil  do %>
         <%= user.name %>
       <% else %>
         <%= user.email %>
@@ -90,7 +89,7 @@ defmodule PantryWeb.OnlineUsers do
     <% end %>
     <br /> offline users:
     <%= for user <- @offline_users do %>
-      <%= if Map.has_key?(user, :name) do %>
+      <%= if Map.get(user, :name) != nil  do %>
         <%= user.name %>
       <% else %>
         <%= user.email %>

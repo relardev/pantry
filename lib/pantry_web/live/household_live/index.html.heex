@@ -21,6 +21,14 @@
   </:action>
   <:action :let={{id, household}}>
     <.link
+      phx-click={JS.push("leave", value: %{id: household.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Leave
+    </.link>
+  </:action>
+  <:action :let={{id, household}}>
+    <.link
       phx-click={JS.push("delete", value: %{id: household.id}) |> hide("##{id}")}
       data-confirm="Are you sure?"
     >

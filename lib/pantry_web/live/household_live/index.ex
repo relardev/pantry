@@ -44,6 +44,13 @@ defmodule PantryWeb.HouseholdLive.Index do
   end
 
   @impl true
+  def handle_event("leave", %{"id" => id}, socket) do
+    household_user = House.get_household_user(id, socket.assigns.current_user.id)
+    House.delete_household_user(household_user)
+    Pantry.Stockpile.Household.Server.reload(id)
+    {:noreply, stream_delete(socket, :households, %{id: id})}
+  end
+
   def handle_event("delete", %{"id" => id}, socket) do
     household = House.get_household!(id, socket.assigns.current_user.id)
     {:ok, _} = House.delete_household(household)

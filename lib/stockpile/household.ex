@@ -20,6 +20,17 @@ defmodule Pantry.Stockpile.Household.Server do
     )
   end
 
+  def reload(id) do
+    GenServer.cast(Pantry.Stockpile.HouseholdRegistry.via(id), :reload)
+  end
+
+  def started?(id) do
+    case Registry.lookup(Pantry.Stockpile.HouseholdRegistry, id) do
+      [] -> false
+      [{_pid, _}] -> true
+    end
+  end
+
   def start_link(id) do
     GenServer.start_link(__MODULE__, id, name: Pantry.Stockpile.HouseholdRegistry.via(id))
   end
@@ -31,29 +42,14 @@ defmodule Pantry.Stockpile.Household.Server do
 
   @impl true
   def handle_continue(:load, id) do
-    household = Pantry.House.get_household_with_users!(id)
     PantryWeb.Presence.subscribe(id)
 
-    online_users =
-      PantryWeb.Presence.list_online_users(id)
-      |> Enum.map(fn x ->
-        %{metas: [meta | _]} = x
+    {:noreply, load_data(id)}
+  end
 
-        meta
-      end)
-
-    online_users_emails = Enum.map(online_users, & &1.email)
-
-    offline_users =
-      household.users
-      |> Enum.reject(fn user -> user.email in online_users_emails end)
-
-    household =
-      household
-      |> Map.put(:online_users, online_users)
-      |> Map.put(:offline_users, offline_users)
-
-    {:noreply, household}
+  @impl true
+  def handle_cast(:reload, household) do
+    {:noreply, load_data(household.id)}
   end
 
   @impl true
@@ -62,12 +58,6 @@ defmodule Pantry.Stockpile.Household.Server do
   end
 
   @impl true
-  def handle_info(:load, household) do
-    household = %{household | name: "Updated Household"}
-    Phoenix.PubSub.broadcast(Pantry.PubSub, "household:#{household.id}", {:update, household})
-    {:noreply, household}
-  end
-
   def handle_info({PantryWeb.Presence, {:join, %{metas: [meta | _]}}}, household) do
     online_users = [meta | household.online_users] |> Enum.uniq_by(& &1.email)
 
@@ -99,7 +89,7 @@ defmodule Pantry.Stockpile.Household.Server do
         |> Map.put(:online_users, online_users)
         |> Map.put(:offline_users, offline_users)
 
-      Phoenix.PubSub.broadcast(Pantry.PubSub, topic(household.id), {:update, household})
+      broadcast_update(household)
       {:noreply, household}
     else
       {:noreply, household}
@@ -109,4 +99,34 @@ defmodule Pantry.Stockpile.Household.Server do
   def topic(household_id) do
     "household:#{household_id}"
   end
+
+  def load_data(id) do
+    household = Pantry.House.get_household_with_users!(id)
+
+    online_users =
+      PantryWeb.Presence.list_online_users(id)
+      |> Enum.map(fn x ->
+        %{metas: [meta | _]} = x
+
+        meta
+      end)
+
+    online_users_emails = Enum.map(online_users, & &1.email)
+
+    offline_users =
+      household.users
+      |> Enum.reject(fn user -> user.email in online_users_emails end)
+
+    household =
+      household
+      |> Map.put(:online_users, online_users)
+      |> Map.put(:offline_users, offline_users)
+
+    broadcast_update(household)
+
+    household
+  end
+
+  def broadcast_update(household),
+    do: Phoenix.PubSub.broadcast(Pantry.PubSub, topic(household.id), {:update, household})
 end

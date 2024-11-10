@@ -36,6 +36,7 @@ defmodule PantryWeb.InviteLive.Index do
 
     household = House.get_household!(household_user.household_id, socket.assigns.current_user.id)
 
+    Pantry.Stockpile.Household.Server.reload(id)
     Pantry.Accounts.activate_household(socket.assigns.current_user, id)
 
     {:noreply,
