@@ -8,6 +8,7 @@ defmodule Pantry.House.Item do
     field :name, :string
     field :quantity, :integer
     field :unit, :string
+    field :expiration, :date
 
     belongs_to :household, Pantry.House.Household
 
