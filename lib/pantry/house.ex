@@ -8,6 +8,7 @@ defmodule Pantry.House do
 
   alias Pantry.House.Household
   alias Pantry.House.HouseholdUser
+  alias Pantry.House.Item
 
   @doc """
   Returns the list of households.
@@ -39,7 +40,7 @@ defmodule Pantry.House do
   """
   def get_household_with_users!(id) do
     Household
-    |> preload(:users)
+    |> preload([:users, :items])
     |> Repo.get!(id)
   end
 
@@ -315,5 +316,11 @@ defmodule Pantry.House do
       end)
 
     household_user
+  end
+
+  def create_item(attrs) do
+    %Item{}
+    |> Item.changeset(attrs)
+    |> Repo.insert()
   end
 end

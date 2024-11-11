@@ -5,6 +5,10 @@ end
 defmodule Pantry.Stockpile.Household.Server do
   use GenServer
 
+  def add_item(id, item) do
+    GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_item, item})
+  end
+
   def supervisor_spec() do
     {DynamicSupervisor, name: Pantry.Stockpile.HouseholdSupervisor, strategy: :one_for_one}
   end
@@ -55,6 +59,10 @@ defmodule Pantry.Stockpile.Household.Server do
   @impl true
   def handle_call(:get_household, _from, household) do
     {:reply, household, household}
+  end
+
+  def handle_call({:add_item, item}, _from, household) do
+    {:reply, Pantry.House.create_item(item), household}
   end
 
   @impl true

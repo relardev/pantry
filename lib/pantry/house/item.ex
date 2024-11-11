@@ -18,7 +18,7 @@ defmodule Pantry.House.Item do
   @doc false
   def changeset(invite, attrs) do
     invite
-    |> cast(attrs, [:name, :quantity, :unit, :household_id])
+    |> cast(attrs, [:name, :quantity, :expiration, :unit, :household_id])
     |> validate_required([:name, :household_id])
     |> unique_constraint([:name, :household_id],
       name: "items_name_household_id_index"

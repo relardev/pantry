@@ -6,6 +6,7 @@ defmodule Pantry.House.Household do
   @foreign_key_type :binary_id
   schema "households" do
     field :name, :string
+    has_many :items, Pantry.House.Item
     many_to_many :users, Pantry.Accounts.User, join_through: Pantry.House.HouseholdUser
 
     timestamps(type: :utc_datetime)
