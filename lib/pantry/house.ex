@@ -39,8 +39,10 @@ defmodule Pantry.House do
 
   """
   def get_household_with_users!(id) do
+    items_query = from(i in Item, order_by: i.expiration)
+
     Household
-    |> preload([:users, :items])
+    |> preload([:users, items: ^items_query])
     |> Repo.get!(id)
   end
 
@@ -322,5 +324,9 @@ defmodule Pantry.House do
     %Item{}
     |> Item.changeset(attrs)
     |> Repo.insert()
+  end
+
+  def delete_item(id) do
+    Repo.delete(%Item{id: id})
   end
 end

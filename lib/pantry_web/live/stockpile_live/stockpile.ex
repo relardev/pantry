@@ -29,8 +29,9 @@ defmodule PantryWeb.StockpileLive do
     end
 
     {:ok,
-     assign_async(
-       socket,
+     socket
+     |> assign(household_id: household_id)
+     |> assign_async(
        :household,
        fn ->
          {:ok,
@@ -72,6 +73,11 @@ defmodule PantryWeb.StockpileLive do
         <:col :let={item} label="Unit"><%= item.unit %></:col>
         <:col :let={item} label="Expiration"><%= item.expiration %></:col>
         <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
+        <:action :let={item}>
+          <.link phx-click={JS.push("delete", value: %{id: item.id})}>
+            Delete
+          </.link>
+        </:action>
       </.table>
     </.async_result>
     """
@@ -94,6 +100,12 @@ defmodule PantryWeb.StockpileLive do
     {:noreply, state}
   end
 
+  @impl true
+  def handle_event("delete", %{"id" => id}, socket) do
+    Pantry.Stockpile.Household.Server.delete_item(socket.assigns.household_id, id)
+    {:noreply, socket}
+  end
+
   def remove_yourself(users, email) do
     users
     |> Enum.reject(fn user -> user.email == email end)
@@ -107,7 +119,7 @@ defmodule PantryWeb.Stockpile.AddItemForm do
   def render(assigns) do
     ~H"""
     <div>
-      <.simple_form
+      <.inline_form
         for={@form}
         id="add-item-form"
         phx-target={@myself}
@@ -121,7 +133,7 @@ defmodule PantryWeb.Stockpile.AddItemForm do
         <:actions>
           <.button phx-disable-with="Saving...">Add</.button>
         </:actions>
-      </.simple_form>
+      </.inline_form>
     </div>
     """
   end
