@@ -10,6 +10,7 @@ defmodule Pantry.Accounts.User do
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
     field :admin, :boolean, default: false
+    field :avatar_id, :integer
     field :name, :string
 
     belongs_to :active_household, Pantry.House.Household
@@ -184,5 +185,10 @@ defmodule Pantry.Accounts.User do
   def name_changeset(user, attrs) do
     user
     |> cast(attrs, [:name])
+  end
+
+  def avatar_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:avatar_id])
   end
 end

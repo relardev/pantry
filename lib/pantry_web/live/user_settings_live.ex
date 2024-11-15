@@ -42,6 +42,47 @@ defmodule PantryWeb.UserSettingsLive do
         </.simple_form>
       </div>
       <div>
+        <form id="upload-form" phx-submit="save" phx-change="validate_file">
+          <.live_file_input upload={@uploads.avatar} />
+          <button type="submit">Upload</button>
+        </form>
+        <%!-- use phx-drop-target with the upload ref to enable file drag and drop --%>
+        <section phx-drop-target={@uploads.avatar.ref}>
+          <%!-- render each avatar entry --%>
+          <%= for entry <- @uploads.avatar.entries do %>
+            <article class="upload-entry">
+              <figure>
+                <.live_img_preview entry={entry} />
+                <figcaption><%= entry.client_name %></figcaption>
+              </figure>
+
+              <%!-- entry.progress will update automatically for in-flight entries --%>
+              <progress value={entry.progress} max="100"><%= entry.progress %>%</progress>
+
+              <%!-- a regular click event whose handler will invoke Phoenix.LiveView.cancel_upload/3 --%>
+              <button
+                type="button"
+                phx-click="cancel-upload"
+                phx-value-ref={entry.ref}
+                aria-label="cancel"
+              >
+                &times;
+              </button>
+
+              <%!-- Phoenix.Component.upload_errors/2 returns a list of error atoms --%>
+              <%= for err <- upload_errors(@uploads.avatar, entry) do %>
+                <p class="alert alert-danger"><%= error_to_string(err) %></p>
+              <% end %>
+            </article>
+          <% end %>
+
+          <%!-- Phoenix.Component.upload_errors/1 returns a list of error atoms --%>
+          <%= for err <- upload_errors(@uploads.avatar) do %>
+            <p class="alert alert-danger"><%= error_to_string(err) %></p>
+          <% end %>
+        </section>
+      </div>
+      <div>
         <.simple_form
           for={@password_form}
           id="password_form"
@@ -81,6 +122,9 @@ defmodule PantryWeb.UserSettingsLive do
     """
   end
 
+  defp error_to_string(:too_large), do: "Too large"
+  defp error_to_string(:not_accepted), do: "You have selected an unacceptable file type"
+
   def mount(%{"token" => token}, _session, socket) do
     socket =
       case Accounts.update_user_email(socket.assigns.current_user, token) do
@@ -91,7 +135,9 @@ defmodule PantryWeb.UserSettingsLive do
           put_flash(socket, :error, "Email change link is invalid or it has expired.")
       end
 
-    {:ok, push_navigate(socket, to: ~p"/users/settings")}
+    {:ok,
+     socket
+     |> push_navigate(to: ~p"/users/settings")}
   end
 
   def mount(_params, _session, socket) do
@@ -109,6 +155,7 @@ defmodule PantryWeb.UserSettingsLive do
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:name_form, to_form(name_changeset))
       |> assign(:trigger_submit, false)
+      |> allow_upload(:avatar, accept: ~w(.jpg .jpeg), max_entries: 1, max_file_size: 4_000_000)
 
     {:ok, socket}
   end
@@ -189,5 +236,27 @@ defmodule PantryWeb.UserSettingsLive do
       {:error, changeset} ->
         {:noreply, assign(socket, name_form: to_form(changeset))}
     end
+  end
+
+  def handle_event("validate_file", _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("cancel-upload", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :avatar, ref)}
+  end
+
+  def handle_event("save", _params, socket) do
+    user =
+      consume_uploaded_entries(socket, :avatar, fn %{path: path}, _entry ->
+        {:ok, user} = Pantry.Accounts.store_avatar(path, socket.assigns.current_user.email)
+        {:ok, ~p"/avatar/#{user.id}"}
+      end)
+
+    {:noreply,
+     socket
+     |> assign(:current_user, user)
+     |> put_flash(:info, "Avatar changed successfully.")
+     |> push_navigate(to: ~p"/users/settings")}
   end
 end

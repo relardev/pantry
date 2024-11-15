@@ -26,6 +26,10 @@ defmodule Pantry.Accounts do
     Repo.get_by(User, email: email)
   end
 
+  def get_user_by_id(id) do
+    Repo.get(User, id)
+  end
+
   @doc """
   Gets a user by email and password.
 
@@ -373,5 +377,27 @@ defmodule Pantry.Accounts do
         false -> Repo.rollback("User does not have access to household")
       end
     end)
+  end
+
+  def store_avatar(file_path, email) do
+    Repo.transaction(fn ->
+      file_content = File.read!(file_path)
+
+      {:ok, %{rows: [[oid]]}} = Repo.query("SELECT lo_from_bytea(0, $1)", [file_content])
+
+      user = get_user_by_email(email)
+
+      {:ok, %{num_rows: _}} = Repo.query("SELECT lo_unlink($1)", [user.avatar_id])
+
+      {:ok, user} = update_user_avatar(user, oid)
+
+      user
+    end)
+  end
+
+  defp update_user_avatar(user, avatar_id) do
+    user
+    |> User.avatar_changeset(%{avatar_id: avatar_id})
+    |> Repo.update()
   end
 end

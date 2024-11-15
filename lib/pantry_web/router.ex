@@ -72,6 +72,8 @@ defmodule PantryWeb.Router do
   scope "/", PantryWeb do
     pipe_through [:browser]
 
+    get "/avatar/:user_id", AvatarController, :show
+
     delete "/users/log_out", UserSessionController, :delete
 
     live_session :current_user,
