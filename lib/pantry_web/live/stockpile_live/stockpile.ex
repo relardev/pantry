@@ -25,7 +25,12 @@ defmodule PantryWeb.StockpileLive do
       email = user.email
       name = user.name
 
-      PantryWeb.Presence.track_user(household_id, email, %{email: email, name: name})
+      PantryWeb.Presence.track_user(household_id, email, %{
+        email: email,
+        name: name,
+        avatar_id: user.avatar_id,
+        id: user.id
+      })
     end
 
     {:ok,
@@ -51,7 +56,7 @@ defmodule PantryWeb.StockpileLive do
 
       <span :if={household}><%= household.name %></span>
       <br />
-      <PantryWeb.Stockpile.Users.list
+      <PantryWeb.Stockpile.Users.lists
         online_users={remove_yourself(household.online_users, @current_user.email)}
         offline_users={remove_yourself(household.offline_users, @current_user.email)}
       />
@@ -95,7 +100,7 @@ defmodule PantryWeb.StockpileLive do
     {:noreply, state}
   end
 
-  def handle_info({PantryWeb.Stockpile.AddItemForm, {:added, item}}, state) do
+  def handle_info({PantryWeb.Stockpile.AddItemForm, {:added, _item}}, state) do
     # TODO add item in the list
     {:noreply, state}
   end
@@ -182,24 +187,39 @@ defmodule PantryWeb.Stockpile.Users do
   attr :online_users, :list
   attr :offline_users, :list
 
-  def list(assigns) do
+  def lists(assigns) do
     ~H"""
-    online users:
-    <%= for user <- @online_users do %>
-      <%= if Map.get(user, :name) != nil  do %>
-        <%= user.name %>
-      <% else %>
-        <%= user.email %>
+    online users: <.users_list users={@online_users} />
+
+    <br /> offline users: <.users_list users={@offline_users} />
+    """
+  end
+
+  def users_list(assigns) do
+    ~H"""
+    <div class="flex">
+      <%= for user <- @users do %>
+        <div class="flex m-3">
+          <%= if user.avatar_id do %>
+            <img
+              src={"/avatar/#{user.id}"}
+              alt={"Avatar of #{user.email}"}
+              class="user-avatar"
+              width="64"
+              height="64"
+              style="object-fit: cover;"
+            />
+          <% end %>
+          <span style="display: flex; align-items: center;">
+            <%= if Map.get(user, :name) != nil  do %>
+              <%= user.name %>
+            <% else %>
+              <%= user.email %>
+            <% end %>
+          </span>
+        </div>
       <% end %>
-    <% end %>
-    <br /> offline users:
-    <%= for user <- @offline_users do %>
-      <%= if Map.get(user, :name) != nil  do %>
-        <%= user.name %>
-      <% else %>
-        <%= user.email %>
-      <% end %>
-    <% end %>
+    </div>
     """
   end
 end

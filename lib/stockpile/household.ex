@@ -115,10 +115,16 @@ defmodule Pantry.Stockpile.Household.Server do
       online_users =
         household.online_users |> Enum.reject(fn user -> user.email == presence.id end)
 
-      leaving_user_name =
-        Enum.find(household.online_users, fn user -> user.email == presence.id end).name
+      leaving_user =
+        Enum.find(household.online_users, fn user -> user.email == presence.id end)
 
-      leaving_user = %{email: presence.id, name: leaving_user_name}
+      leaving_user = %{
+        email: presence.id,
+        id: leaving_user.id,
+        name: leaving_user.name,
+        avatar_id: leaving_user.avatar_id
+      }
+
       offline_users = [leaving_user | household.offline_users]
 
       household =

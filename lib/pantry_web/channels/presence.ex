@@ -39,7 +39,9 @@ defmodule PantryWeb.Presence do
     list(topic(household_id)) |> Enum.map(fn {_id, presence} -> presence end)
   end
 
-  def track_user(household_id, name, params), do: track(self(), topic(household_id), name, params)
+  def track_user(household_id, name, params) do
+    track(self(), topic(household_id), name, params)
+  end
 
   def subscribe(household_id),
     do: Phoenix.PubSub.subscribe(Pantry.PubSub, "proxy:#{topic(household_id)}")
