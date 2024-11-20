@@ -9,6 +9,13 @@ defmodule Pantry.Stockpile.Household.Server do
     GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_item, item})
   end
 
+  def update_item_quantity(id, item_id, quantity) do
+    GenServer.cast(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:update_item_quantity, item_id, quantity}
+    )
+  end
+
   def delete_item(id, item_id) do
     GenServer.cast(Pantry.Stockpile.HouseholdRegistry.via(id), {:delete_item, item_id})
   end
@@ -63,6 +70,20 @@ defmodule Pantry.Stockpile.Household.Server do
   def handle_cast({:delete_item, item_id}, household) do
     {:ok, _} = Pantry.House.delete_item(item_id)
     items = Enum.reject(household.items, fn item -> item.id == item_id end)
+    household = Map.put(household, :items, items)
+    broadcast_update(household)
+
+    {:noreply, household}
+  end
+
+  def handle_cast({:update_item_quantity, item_id, quantity}, household) do
+    {:ok, item} = Pantry.House.update_item_quantity(item_id, quantity)
+
+    items =
+      Enum.map(household.items, fn i ->
+        if i.id == item_id, do: %{i | quantity: item.quantity}, else: i
+      end)
+
     household = Map.put(household, :items, items)
     broadcast_update(household)
 

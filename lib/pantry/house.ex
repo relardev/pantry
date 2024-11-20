@@ -329,4 +329,10 @@ defmodule Pantry.House do
   def delete_item(id) do
     Repo.delete(%Item{id: id})
   end
+
+  def update_item_quantity(id, quantity) do
+    %Item{id: id}
+    |> Item.update_quantity(quantity)
+    |> Repo.update()
+  end
 end

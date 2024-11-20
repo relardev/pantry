@@ -1,6 +1,7 @@
 defmodule PantryWeb.StockpileLive do
   use PantryWeb, :live_view
 
+  alias Pantry.House.Item
   alias Phoenix.LiveView.AsyncResult
 
   @impl true
@@ -39,9 +40,14 @@ defmodule PantryWeb.StockpileLive do
      |> assign_async(
        :household,
        fn ->
+         household =
+           household_id
+           |> Pantry.Stockpile.Household.Server.get_household()
+           |> prepare_household_for_frontend()
+
          {:ok,
           %{
-            household: Pantry.Stockpile.Household.Server.get_household(household_id)
+            household: household
           }}
        end
      )}
@@ -68,13 +74,27 @@ defmodule PantryWeb.StockpileLive do
         id="add-item-form"
         household_id={household.id}
         title="Add Item"
-        item={%Pantry.House.Item{}}
+        item={%Item{}}
         }
       />
 
       <.table id="items" rows={household.items}>
         <:col :let={item} label="Name"><%= item.name %></:col>
-        <:col :let={item} label="Quantity"><%= item.quantity %></:col>
+        <:col :let={item} label="Quantity">
+          <.simple_form
+            for={item.form}
+            id={"quantity-form-" <> item.id}
+            phx-change={"update_quantity-" <> item.id}
+          >
+            <.input
+              type="number"
+              name="quantity"
+              value={format(item.quantity)}
+              field={item.form[:quantity]}
+              phx-debounce="200"
+            />
+          </.simple_form>
+        </:col>
         <:col :let={item} label="Unit"><%= item.unit %></:col>
         <:col :let={item} label="Expiration"><%= item.expiration %></:col>
         <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
@@ -94,8 +114,19 @@ defmodule PantryWeb.StockpileLive do
     Date.diff(expiration, Date.utc_today())
   end
 
+  def format(number) when is_float(number) do
+    if number == trunc(number) do
+      trunc(number)
+    else
+      number
+    end
+  end
+
+  def format(number), do: number
+
   @impl true
   def handle_info({:update, household}, state) do
+    household = prepare_household_for_frontend(household)
     state = assign(state, household: AsyncResult.ok(household))
     {:noreply, state}
   end
@@ -111,9 +142,55 @@ defmodule PantryWeb.StockpileLive do
     {:noreply, socket}
   end
 
-  def remove_yourself(users, email) do
+  def handle_event("update_quantity-" <> item_id, %{"quantity" => ""}, socket) do
+    form =
+      %Item{}
+      |> Item.update_quantity("")
+      |> to_form(action: :validate)
+
+    items =
+      socket.assigns.household.result.items
+      |> Enum.map(fn item ->
+        if item.id == item_id do
+          Map.put(item, :form, form)
+        else
+          item
+        end
+      end)
+
+    {:noreply,
+     assign(socket, household: AsyncResult.ok(%{socket.assigns.household.result | items: items}))}
+  end
+
+  def handle_event("update_quantity-" <> item_id, %{"quantity" => value}, socket) do
+    case Float.parse(value) do
+      {val, ""} ->
+        Pantry.Stockpile.Household.Server.update_item_quantity(
+          socket.assigns.household_id,
+          item_id,
+          val
+        )
+
+      _ ->
+        nil
+    end
+
+    {:noreply, socket}
+  end
+
+  defp remove_yourself(users, email) do
     users
     |> Enum.reject(fn user -> user.email == email end)
+  end
+
+  defp prepare_household_for_frontend(household) do
+    items =
+      household.items
+      |> Enum.map(fn item ->
+        Map.put(item, :form, to_form(Item.update_quantity(item, item.quantity)))
+      end)
+
+    Map.put(household, :items, items)
   end
 end
 

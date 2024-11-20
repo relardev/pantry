@@ -6,7 +6,7 @@ defmodule Pantry.House.Item do
   @foreign_key_type :binary_id
   schema "items" do
     field :name, :string
-    field :quantity, :integer
+    field :quantity, :float
     field :unit, :string
     field :expiration, :date
 
@@ -16,12 +16,19 @@ defmodule Pantry.House.Item do
   end
 
   @doc false
-  def changeset(invite, attrs) do
-    invite
+  def changeset(item, attrs) do
+    item
     |> cast(attrs, [:name, :quantity, :expiration, :unit, :household_id])
     |> validate_required([:name, :household_id])
     |> unique_constraint([:name, :household_id],
       name: "items_name_household_id_index"
     )
+  end
+
+  def update_quantity(item, quantity) do
+    item
+    |> cast(%{quantity: quantity}, [:quantity])
+    |> validate_number(:quantity, greater_than: 0)
+    |> validate_required([:quantity])
   end
 end
