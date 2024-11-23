@@ -3,6 +3,7 @@ defmodule PantryWeb.StockpileLive do
 
   alias Pantry.House.Item
   alias Phoenix.LiveView.AsyncResult
+  alias PantryWeb.StockpileLive.FormatNumber
 
   @impl true
   def mount(_params, _session, %{assigns: %{current_user: %{active_household_id: nil}}} = socket) do
@@ -78,7 +79,7 @@ defmodule PantryWeb.StockpileLive do
         }
       />
 
-      <.table id="items" rows={household.items}>
+      <.table id="items" rows={household.items} row_id={&("item-" <> &1.id)}>
         <:col :let={item} label="Name"><%= item.name %></:col>
         <:col :let={item} label="Quantity">
           <.simple_form
@@ -89,7 +90,8 @@ defmodule PantryWeb.StockpileLive do
             <.input
               type="number"
               name="quantity"
-              value={format(item.quantity)}
+              id={"item_quantity-" <> item.id}
+              value={FormatNumber.format(item.quantity)}
               field={item.form[:quantity]}
               phx-debounce="200"
             />
@@ -99,7 +101,16 @@ defmodule PantryWeb.StockpileLive do
         <:col :let={item} label="Expiration"><%= item.expiration %></:col>
         <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
         <:action :let={item}>
-          <.link phx-click={JS.push("delete", value: %{id: item.id})}>
+          <.link
+            phx-disable-with="Deleting..."
+            phx-click={
+              JS.push("delete", value: %{id: item.id})
+              |> JS.transition({"ease-in-out duration-300", "opacity-100", "opacity-50"},
+                time: 300,
+                to: "#item-#{item.id}"
+              )
+            }
+          >
             Delete
           </.link>
         </:action>
@@ -113,16 +124,6 @@ defmodule PantryWeb.StockpileLive do
   defp days_left(expiration) do
     Date.diff(expiration, Date.utc_today())
   end
-
-  def format(number) when is_float(number) do
-    if number == trunc(number) do
-      trunc(number)
-    else
-      number
-    end
-  end
-
-  def format(number), do: number
 
   @impl true
   def handle_info({:update, household}, state) do
