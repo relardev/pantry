@@ -1,6 +1,15 @@
 defmodule PantryWeb.Stockpile.AddItemForm do
   use PantryWeb, :live_component
 
+  @unit_options [
+    {"kg", "kg"},
+    {"g", "g"},
+    {"unit", "unit"},
+    {"litr", "l"},
+    {"ml", "ml"},
+    {"pack", "pack"}
+  ]
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -14,7 +23,7 @@ defmodule PantryWeb.Stockpile.AddItemForm do
       >
         <.input field={@form[:name]} type="text" label="Name" />
         <.input field={@form[:quantity]} type="text" label="Quantity" />
-        <.input field={@form[:unit]} type="text" label="Unit" />
+        <.input field={@form[:unit]} type="select" label="Unit" options={unit_options()} />
         <.input field={@form[:expiration]} type="date" label="Expiration" />
         <:actions>
           <.button phx-disable-with="Saving...">Add</.button>
@@ -23,6 +32,8 @@ defmodule PantryWeb.Stockpile.AddItemForm do
     </div>
     """
   end
+
+  defp unit_options(), do: @unit_options
 
   @impl true
   def update(%{item: item} = assigns, socket) do

@@ -103,9 +103,14 @@ defmodule Pantry.Stockpile.Household.Server do
       |> Enum.sort_by(
         & &1.expiration,
         fn
-          nil, _ -> false
-          _, nil -> true
-          exp1, exp2 -> exp1 < exp2
+          nil, _ ->
+            false
+
+          _, nil ->
+            true
+
+          exp1, exp2 ->
+            Date.compare(exp1, exp2) == :lt
         end
       )
 
