@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "alpinejs": "^3.14.3"
+    "alpinejs": "^3.14.3",
+    "nightwind": "^1.1.13"
   },
   "devDependencies": {
     "daisyui": "^4.12.14"

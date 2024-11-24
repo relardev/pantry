@@ -12,6 +12,7 @@ module.exports = {
     "../lib/pantry_web/**/*.*ex",
     '../deps/backpex/**/*.*ex'
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -20,6 +21,7 @@ module.exports = {
     },
   },
   plugins: [
+    require("nightwind"),
     // Allows prefixing tailwind classes with LiveView classes to add rules
     // only when LiveView classes are applied, for example:
     //

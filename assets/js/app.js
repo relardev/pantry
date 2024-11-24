@@ -41,6 +41,28 @@ let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken}
 })
 
+function applyColorSchemePreference() {
+    const darkExpected = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (darkExpected) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.setProperty('color-scheme', 'dark');
+    }
+    else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.setProperty('color-scheme', 'light');
+    }
+}
+
+// set listener to update color scheme preference on change
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    const newColorScheme = event.matches ? "dark" : "light";
+    applyColorSchemePreference();
+});
+
+// check color scheme preference on page load
+applyColorSchemePreference();
+
+
 // Show progress bar on live navigation and form submits
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))

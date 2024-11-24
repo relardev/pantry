@@ -226,7 +226,7 @@ defmodule PantryWeb.CoreComponents do
   def inline_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 m-2 flex flex-row bg-white">
+      <div class="mt-10 m-2 flex flex-row">
         <%= render_slot(@inner_block, f) %>
         <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
           <%= render_slot(action, f) %>
