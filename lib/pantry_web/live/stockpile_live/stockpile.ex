@@ -81,21 +81,21 @@ defmodule PantryWeb.StockpileLive do
 
       <.table id="items" rows={household.items} row_id={&("item-" <> &1.id)}>
         <:col :let={item} label="Name"><%= item.name %></:col>
-        <:col :let={item} label="Quantity">
-          <.simple_form
+        <:col :let={item} label="Quant">
+          <.small_form
             for={item.form}
             id={"quantity-form-" <> item.id}
             phx-change={"update_quantity-" <> item.id}
           >
             <.input
-              type="number"
+              type="small_number"
               name="quantity"
               id={"item_quantity-" <> item.id}
               value={FormatNumber.format(item.quantity)}
               field={item.form[:quantity]}
               phx-debounce="200"
             />
-          </.simple_form>
+          </.small_form>
         </:col>
         <:col :let={item} label="Unit"><%= item.unit %></:col>
         <:col :let={item} label="Expiration"><%= item.expiration %></:col>
