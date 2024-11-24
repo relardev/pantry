@@ -1,11 +1,12 @@
 defmodule PantryWeb.Stockpile.AddItemForm do
   use PantryWeb, :live_component
+  alias Pantry.House.Item
 
   @unit_options [
     {"kg", "kg"},
     {"g", "g"},
     {"unit", "unit"},
-    {"litr", "l"},
+    {"l", "l"},
     {"ml", "ml"},
     {"pack", "pack"}
   ]
@@ -41,14 +42,14 @@ defmodule PantryWeb.Stockpile.AddItemForm do
      socket
      |> assign(assigns)
      |> assign_new(:form, fn ->
-       to_form(Pantry.House.Item.changeset(item, %{}))
+       to_form(Item.changeset(item, %{}))
      end)}
   end
 
   @impl true
   def handle_event("validate", %{"item" => item_params}, socket) do
     item_params = unpack_quantity(item_params)
-    changeset = Pantry.House.Item.changeset(socket.assigns.item, item_params)
+    changeset = Item.changeset(socket.assigns.item, item_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
@@ -57,15 +58,18 @@ defmodule PantryWeb.Stockpile.AddItemForm do
     item_params = Map.put(item_params, "household_id", household_id)
     item_params = unpack_quantity(item_params)
 
-    case Pantry.Stockpile.Household.Server.add_item(household_id, item_params) do
-      {:ok, item} ->
-        notify_parent({:added, item})
+    with %Ecto.Changeset{errors: []} <- Item.changeset(%Item{}, item_params),
+         {:ok, item} <- Pantry.Stockpile.Household.Server.add_item(household_id, item_params) do
+      notify_parent({:added, item})
 
-        {:noreply,
-         socket
-         |> assign(item: %Pantry.House.Item{})
-         |> assign(form: to_form(Pantry.House.Item.changeset(%Pantry.House.Item{}, %{})))
-         |> push_event("focus", %{id: "first-input"})}
+      {:noreply,
+       socket
+       |> assign(item: %Item{})
+       |> assign(form: to_form(Item.changeset(%Item{}, %{})))
+       |> push_event("focus", %{id: "first-input"})}
+    else
+      %Ecto.Changeset{} = changeset ->
+        {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
 
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
