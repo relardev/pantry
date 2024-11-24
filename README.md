@@ -1,5 +1,12 @@
 # Pantry
 
+install js deps:
+
+```
+cd assets
+npm install
+```
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies
