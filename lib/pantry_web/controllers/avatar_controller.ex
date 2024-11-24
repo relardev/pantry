@@ -43,7 +43,7 @@ defmodule PantryWeb.AvatarController do
 
         conn
         # Adjust content type as needed 
-        |> put_resp_content_type("image/jpeg")
+        |> put_resp_content_type("image/png")
         |> send_chunked(200)
         |> stream_chunks(stream)
       end)

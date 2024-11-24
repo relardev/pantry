@@ -42,7 +42,7 @@ defmodule PantryWeb.UserSettingsLive do
         </.simple_form>
       </div>
       <div>
-        <form id="upload-form" phx-submit="save" phx-change="validate_file">
+        <form id="upload-form" phx-submit="save_avatar" phx-change="validate_file">
           <.live_file_input upload={@uploads.avatar} />
           <button type="submit">Upload</button>
         </form>
@@ -155,7 +155,11 @@ defmodule PantryWeb.UserSettingsLive do
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:name_form, to_form(name_changeset))
       |> assign(:trigger_submit, false)
-      |> allow_upload(:avatar, accept: ~w(.jpg .jpeg), max_entries: 1, max_file_size: 4_000_000)
+      |> allow_upload(:avatar,
+        accept: ~w(.jpg .jpeg .png .gif .webp .svg .ico),
+        max_entries: 1,
+        max_file_size: 4_000_000
+      )
 
     {:ok, socket}
   end
@@ -246,9 +250,10 @@ defmodule PantryWeb.UserSettingsLive do
     {:noreply, cancel_upload(socket, :avatar, ref)}
   end
 
-  def handle_event("save", _params, socket) do
+  def handle_event("save_avatar", _params, socket) do
     user =
       consume_uploaded_entries(socket, :avatar, fn %{path: path}, _entry ->
+        {:ok, path} = convert_to_png(path)
         {:ok, user} = Pantry.Accounts.store_avatar(path, socket.assigns.current_user.email)
         {:ok, ~p"/avatar/#{user.id}"}
       end)
@@ -258,5 +263,14 @@ defmodule PantryWeb.UserSettingsLive do
      |> assign(:current_user, user)
      |> put_flash(:info, "Avatar changed successfully.")
      |> push_navigate(to: ~p"/users/settings")}
+  end
+
+  def convert_to_png(path) do
+    output_path = Path.rootname(path) <> ".png"
+
+    case System.cmd("convert", [path, "-resize", "128x128^>", output_path]) do
+      {_, 0} -> {:ok, output_path}
+      {error, _} -> {:error, "Conversion failed: #{error}"}
+    end
   end
 end
