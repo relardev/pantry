@@ -4,5 +4,8 @@
   },
   "devDependencies": {
     "daisyui": "^4.12.14"
+  },
+  "scripts": {
+    "deploy": "cd .. && mix assets.deploy && rm -f _build/esbuild"
   }
 }
