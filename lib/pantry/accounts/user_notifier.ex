@@ -5,14 +5,16 @@ defmodule Pantry.Accounts.UserNotifier do
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
+    domain = System.get_env("MAILGUN_DOMAIN", "example.com")
+
     email =
       new()
       |> to(recipient)
-      |> from({"Pantry", "contact@example.com"})
+      |> from({"Pantry", "no-reply@#{domain}"})
       |> subject(subject)
       |> text_body(body)
 
-    with {:ok, _metadata} <- Mailer.deliver(email) do
+    with {:ok, metadata} <- Mailer.deliver(email) do
       {:ok, email}
     end
   end

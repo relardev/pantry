@@ -11,9 +11,6 @@ config :pantry, PantryWeb.Endpoint,
   url: [host: "pantry.relar.dev"],
   check_origin: ["//pantry.relar.dev"]
 
-# Configures Swoosh API Client
-config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: Pantry.Finch
-
 # Disable Swoosh Local Memory Storage
 config :swoosh, local: false
 
@@ -22,3 +19,10 @@ config :logger, level: :info
 
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
+config :pantry, Pantry.Mailer,
+  adapter: Swoosh.Adapters.Mailgun,
+  base_url: "https://api.eu.mailgun.net/v3",
+  api_key: System.get_env("MAILGUN_API_KEY"),
+  domain: System.get_env("MAILGUN_DOMAIN")
+
+config :swoosh, :api_client, Swoosh.ApiClient.Req

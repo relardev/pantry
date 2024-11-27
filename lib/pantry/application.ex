@@ -13,7 +13,7 @@ defmodule Pantry.Application do
       {DNSCluster, query: Application.get_env(:pantry, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Pantry.PubSub},
       # Start the Finch HTTP client for sending emails
-      {Finch, name: Pantry.Finch},
+      # {Finch, name: Pantry.Finch},
       # Start a worker by calling: Pantry.Worker.start_link(arg)
       # {Pantry.Worker, arg},
       # Start to serve requests, typically the last entry
