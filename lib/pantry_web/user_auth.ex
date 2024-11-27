@@ -213,8 +213,17 @@ defmodule PantryWeb.UserAuth do
   end
 
   def require_authenticated_user(conn, _opts) do
-    if conn.assigns[:current_user] do
-      conn
+    user = conn.assigns[:current_user]
+
+    if user do
+      if user.confirmed_at do
+        conn
+      else
+        conn
+        |> maybe_store_return_to()
+        |> redirect(to: ~p"/confirmation_required")
+        |> halt()
+      end
     else
       handle_not_authenticated(conn, "You must log in to access this page.")
     end

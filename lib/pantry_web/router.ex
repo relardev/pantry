@@ -80,6 +80,7 @@ defmodule PantryWeb.Router do
       on_mount: [{PantryWeb.UserAuth, :mount_current_user}] do
       live "/users/confirm/:token", UserConfirmationLive, :edit
       live "/users/confirm", UserConfirmationInstructionsLive, :new
+      live "/confirmation_required", ConfirmationLive
     end
   end
 
