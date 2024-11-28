@@ -234,6 +234,11 @@ defmodule PantryWeb.StockpileLive do
 
   defp filter_items(items, search) do
     items
-    |> Enum.filter(fn item -> String.contains?(item.name, search) end)
+    |> Enum.filter(fn item ->
+      String.contains?(
+        String.downcase(item.name),
+        String.downcase(search)
+      )
+    end)
   end
 end
