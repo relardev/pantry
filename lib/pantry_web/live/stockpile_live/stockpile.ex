@@ -38,6 +38,7 @@ defmodule PantryWeb.StockpileLive do
     {:ok,
      socket
      |> assign(household_id: household_id)
+     |> assign(search_form: search_form(""))
      |> assign_async(
        :household,
        fn ->
@@ -78,6 +79,10 @@ defmodule PantryWeb.StockpileLive do
         item={%Item{}}
         }
       />
+
+      <.inline_form for={@search_form} id="search-form" phx-change="search" phx-submit="save">
+        <.input field={@search_form[:search]} type="text" phx-debounce="200" placeholder="Search..." />
+      </.inline_form>
 
       <.table id="items" rows={household.items} row_id={&("item-" <> &1.id)}>
         <:col :let={item} label="Name"><%= item.name %></:col>
@@ -126,9 +131,18 @@ defmodule PantryWeb.StockpileLive do
   end
 
   @impl true
-  def handle_info({:update, household}, state) do
-    household = prepare_household_for_frontend(household)
-    state = assign(state, household: AsyncResult.ok(household))
+  def handle_info({:update, new_household}, state) do
+    original_household = prepare_household_for_frontend(new_household)
+    filtered = filter_items(original_household.items, state.assigns.search_form["search"].value)
+
+    household = Map.put(original_household, :items, filtered)
+
+    state =
+      assign(state,
+        household: AsyncResult.ok(household),
+        original_household: original_household
+      )
+
     {:noreply, state}
   end
 
@@ -179,6 +193,16 @@ defmodule PantryWeb.StockpileLive do
     {:noreply, socket}
   end
 
+  def handle_event("search", %{"_target" => ["search"], "search" => value}, socket) do
+    socket = search(socket, value)
+    {:noreply, socket}
+  end
+
+  def handle_event("save", %{"search" => value}, socket) do
+    socket = search(socket, value)
+    {:noreply, socket}
+  end
+
   defp remove_yourself(users, email) do
     users
     |> Enum.reject(fn user -> user.email == email end)
@@ -192,5 +216,24 @@ defmodule PantryWeb.StockpileLive do
       end)
 
     Map.put(household, :items, items)
+  end
+
+  defp search(socket, value) do
+    items = socket.assigns.original_household.items
+    filtered = filter_items(items, value)
+
+    assign(socket,
+      household: AsyncResult.ok(Map.put(socket.assigns.original_household, :items, filtered)),
+      search_form: search_form(value)
+    )
+  end
+
+  defp search_form(value), do: to_form(%{"search" => value})
+
+  defp filter_items(items, ""), do: items
+
+  defp filter_items(items, search) do
+    items
+    |> Enum.filter(fn item -> String.contains?(item.name, search) end)
   end
 end
