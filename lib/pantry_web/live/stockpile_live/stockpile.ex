@@ -88,21 +88,38 @@ defmodule PantryWeb.StockpileLive do
         <:col :let={item} label="Name"><%= item.name %></:col>
         <:col :let={item} label="Quant">
           <.small_form
-            for={item.form}
+            for={item.quantity_form}
             id={"quantity-form-" <> item.id}
             phx-change={"update_quantity-" <> item.id}
+            phx-submit={"update_quantity-" <> item.id}
           >
             <.input
               type="small_number"
               name="quantity"
               id={"item_quantity-" <> item.id}
               value={FormatNumber.format(item.quantity)}
-              field={item.form[:quantity]}
+              field={item.quantity_form[:quantity]}
               phx-debounce="200"
             />
           </.small_form>
         </:col>
-        <:col :let={item} label="Unit"><%= item.unit %></:col>
+        <:col :let={item} label="Unit">
+          <.small_form
+            for={item.unit_form}
+            id={"unit-form-" <> item.id}
+            phx-change={"update_unit-" <> item.id}
+            phx-submit={"update_unit-" <> item.id}
+          >
+            <.input
+              type="select"
+              name="unit"
+              id={"item_unit-" <> item.id}
+              value={item.unit}
+              field={item.unit_form[:unit]}
+              options={Item.units()}
+            />
+          </.small_form>
+        </:col>
         <:col :let={item} label="Expiration"><%= item.expiration %></:col>
         <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
         <:action :let={item}>
@@ -193,6 +210,16 @@ defmodule PantryWeb.StockpileLive do
     {:noreply, socket}
   end
 
+  def handle_event("update_unit-" <> item_id, %{"unit" => value}, socket) do
+    Pantry.Stockpile.Household.Server.update_item_unit(
+      socket.assigns.household_id,
+      item_id,
+      value
+    )
+
+    {:noreply, socket}
+  end
+
   def handle_event("search", %{"_target" => ["search"], "search" => value}, socket) do
     socket = search(socket, value)
     {:noreply, socket}
@@ -212,7 +239,9 @@ defmodule PantryWeb.StockpileLive do
     items =
       household.items
       |> Enum.map(fn item ->
-        Map.put(item, :form, to_form(Item.update_quantity(item, item.quantity)))
+        item
+        |> Map.put(:quantity_form, to_form(Item.update_quantity(item, item.quantity)))
+        |> Map.put(:unit_form, to_form(Item.update_unit(item, item.unit)))
       end)
 
     Map.put(household, :items, items)

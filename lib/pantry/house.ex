@@ -335,4 +335,10 @@ defmodule Pantry.House do
     |> Item.update_quantity(quantity)
     |> Repo.update()
   end
+
+  def update_item_unit(id, unit) do
+    %Item{id: id}
+    |> Item.update_unit(unit)
+    |> Repo.update()
+  end
 end

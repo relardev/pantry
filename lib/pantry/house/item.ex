@@ -4,6 +4,10 @@ defmodule Pantry.House.Item do
 
   @unit_enum ~w(kg g unit l ml pack)a
 
+  def units() do
+    @unit_enum
+  end
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "items" do
@@ -42,5 +46,12 @@ defmodule Pantry.House.Item do
     |> cast(%{quantity: quantity}, [:quantity])
     |> validate_number(:quantity, greater_than: 0)
     |> validate_required([:quantity])
+  end
+
+  def update_unit(item, unit) do
+    item
+    |> cast(%{unit: unit}, [:unit])
+    |> validate_inclusion(:unit, @unit_enum)
+    |> validate_required([:unit])
   end
 end
