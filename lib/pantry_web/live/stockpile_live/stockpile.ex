@@ -56,6 +56,44 @@ defmodule PantryWeb.StockpileLive do
   end
 
   @impl true
+  def handle_params(params, _url, socket) do
+    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
+  end
+
+  defp apply_action(socket, :overview, _params) do
+    socket
+    |> assign(:page_title, "Overview")
+    |> assign(:nav, navigation(:overview))
+  end
+
+  defp apply_action(socket, :items, _params) do
+    socket
+    |> assign(:page_title, "Items")
+    |> assign(:nav, navigation(:items))
+  end
+
+  defp apply_action(socket, :recipes, _params) do
+    socket
+    |> assign(:page_title, "Recipes")
+    |> assign(:nav, navigation(:recipes))
+  end
+
+  defp apply_action(socket, :shopping_list, _params) do
+    socket
+    |> assign(:page_title, "Shopping List")
+    |> assign(:nav, navigation(:shopping_list))
+  end
+
+  defp navigation(current) do
+    [
+      %{url: "/app", label: "Overview", active: current == :overview},
+      %{url: "/app/items", label: "Items", active: current == :items},
+      %{url: "/app/recipes", label: "Recipes", active: current == :recipes},
+      %{url: "/app/shopping-list", label: "Shopping List", active: current == :shopping_list}
+    ]
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <.async_result :let={household} assign={@household}>
@@ -71,72 +109,81 @@ defmodule PantryWeb.StockpileLive do
 
       <br />
 
-      <.live_component
-        module={PantryWeb.Stockpile.AddItemForm}
-        id="add-item-form"
-        household_id={household.id}
-        title="Add Item"
-        item={%Item{}}
-        }
-      />
+      <PantryWeb.Stockpile.Navigation.nav items={@nav} />
 
-      <.inline_form for={@search_form} id="search-form" phx-change="search" phx-submit="save">
-        <.input field={@search_form[:search]} type="text" phx-debounce="200" placeholder="Search..." />
-      </.inline_form>
+      <%= if @live_action == :items do %>
+        <.live_component
+          module={PantryWeb.Stockpile.AddItemForm}
+          id="add-item-form"
+          household_id={household.id}
+          title="Add Item"
+          item={%Item{}}
+          }
+        />
 
-      <.table id="items" rows={household.items} row_id={&("item-" <> &1.id)}>
-        <:col :let={item} label="Name"><%= item.name %></:col>
-        <:col :let={item} label="Quant">
-          <.small_form
-            for={item.quantity_form}
-            id={"quantity-form-" <> item.id}
-            phx-change={"update_quantity-" <> item.id}
-            phx-submit={"update_quantity-" <> item.id}
-          >
-            <.input
-              type="small_number"
-              name="quantity"
-              id={"item_quantity-" <> item.id}
-              value={FormatNumber.format(item.quantity)}
-              field={item.quantity_form[:quantity]}
-              phx-debounce="200"
-            />
-          </.small_form>
-        </:col>
-        <:col :let={item} label="Unit">
-          <.small_form
-            for={item.unit_form}
-            id={"unit-form-" <> item.id}
-            phx-change={"update_unit-" <> item.id}
-            phx-submit={"update_unit-" <> item.id}
-          >
-            <.input
-              type="select"
-              name="unit"
-              id={"item_unit-" <> item.id}
-              value={item.unit}
-              field={item.unit_form[:unit]}
-              options={Item.units()}
-            />
-          </.small_form>
-        </:col>
-        <:col :let={item} label="Expiration"><%= item.expiration %></:col>
-        <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
-        <:action :let={item}>
-          <.link
-            phx-disable-with="Deleting..."
-            phx-click={
-              JS.push("delete", value: %{id: item.id})
-              |> JS.transition({"ease-in-out duration-300", "opacity-100", "opacity-50"},
-                time: 300,
-                to: "#item-#{item.id}"
-              )
-            }
-          >
-            Delete
-          </.link>
-        </:action>
-      </.table>
+        <.inline_form for={@search_form} id="search-form" phx-change="search" phx-submit="save">
+          <.input
+            field={@search_form[:search]}
+            type="text"
+            phx-debounce="200"
+            placeholder="Search..."
+          />
+        </.inline_form>
+
+        <.table id="items" rows={household.items} row_id={&("item-" <> &1.id)}>
+          <:col :let={item} label="Name"><%= item.name %></:col>
+          <:col :let={item} label="Quant">
+            <.small_form
+              for={item.quantity_form}
+              id={"quantity-form-" <> item.id}
+              phx-change={"update_quantity-" <> item.id}
+              phx-submit={"update_quantity-" <> item.id}
+            >
+              <.input
+                type="small_number"
+                name="quantity"
+                id={"item_quantity-" <> item.id}
+                value={FormatNumber.format(item.quantity)}
+                field={item.quantity_form[:quantity]}
+                phx-debounce="200"
+              />
+            </.small_form>
+          </:col>
+          <:col :let={item} label="Unit">
+            <.small_form
+              for={item.unit_form}
+              id={"unit-form-" <> item.id}
+              phx-change={"update_unit-" <> item.id}
+              phx-submit={"update_unit-" <> item.id}
+            >
+              <.input
+                type="select"
+                name="unit"
+                id={"item_unit-" <> item.id}
+                value={item.unit}
+                field={item.unit_form[:unit]}
+                options={Item.units()}
+              />
+            </.small_form>
+          </:col>
+          <:col :let={item} label="Expiration"><%= item.expiration %></:col>
+          <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
+          <:action :let={item}>
+            <.link
+              phx-disable-with="Deleting..."
+              phx-click={
+                JS.push("delete", value: %{id: item.id})
+                |> JS.transition({"ease-in-out duration-300", "opacity-100", "opacity-50"},
+                  time: 300,
+                  to: "#item-#{item.id}"
+                )
+              }
+            >
+              Delete
+            </.link>
+          </:action>
+        </.table>
+      <% end %>
     </.async_result>
     """
   end

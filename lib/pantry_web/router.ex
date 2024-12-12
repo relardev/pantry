@@ -86,9 +86,15 @@ defmodule PantryWeb.Router do
   scope "/", PantryWeb do
     pipe_through [:browser, :require_authenticated_user]
 
+    get "/", PageController, :home
+
     live_session :house,
       on_mount: [{PantryWeb.UserAuth, :ensure_authenticated}] do
-      live "/", StockpileLive
+      live "/app", StockpileLive, :overview
+      live "/app/items", StockpileLive, :items
+      live "/app/recipes", StockpileLive, :recipes
+      live "/app/shopping-list", StockpileLive, :shopping_list
+
       live "/households", HouseholdLive.Index, :index
       live "/households/new", HouseholdLive.Index, :new
       live "/households/:id/edit", HouseholdLive.Index, :edit
