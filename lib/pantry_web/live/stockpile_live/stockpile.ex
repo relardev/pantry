@@ -3,7 +3,6 @@ defmodule PantryWeb.StockpileLive do
 
   alias Pantry.House.Item
   alias Phoenix.LiveView.AsyncResult
-  alias PantryWeb.StockpileLive.FormatNumber
 
   @impl true
   def mount(_params, _session, %{assigns: %{current_user: %{active_household_id: nil}}} = socket) do
@@ -38,7 +37,6 @@ defmodule PantryWeb.StockpileLive do
     {:ok,
      socket
      |> assign(household_id: household_id)
-     |> assign(search_form: search_form(""))
      |> assign_async(
        :household,
        fn ->
@@ -111,170 +109,30 @@ defmodule PantryWeb.StockpileLive do
 
       <PantryWeb.Stockpile.Navigation.nav items={@nav} />
 
-      <%= if @live_action == :items do %>
-        <.live_component
-          module={PantryWeb.Stockpile.AddItemForm}
-          id="add-item-form"
-          household_id={household.id}
-          title="Add Item"
-          item={%Item{}}
-          }
-        />
-
-        <.inline_form for={@search_form} id="search-form" phx-change="search" phx-submit="save">
-          <.input
-            field={@search_form[:search]}
-            type="text"
-            phx-debounce="200"
-            placeholder="Search..."
+      <div class="h-screen">
+        <%= if @live_action == :items do %>
+          <.live_component
+            module={PantryWeb.StockpileLive.Items}
+            id="items_list"
+            items={household.items}
+            household_id={household.id}
           />
-        </.inline_form>
-
-        <.table id="items" rows={household.items} row_id={&("item-" <> &1.id)}>
-          <:col :let={item} label="Name"><%= item.name %></:col>
-          <:col :let={item} label="Quant">
-            <.small_form
-              for={item.quantity_form}
-              id={"quantity-form-" <> item.id}
-              phx-change={"update_quantity-" <> item.id}
-              phx-submit={"update_quantity-" <> item.id}
-            >
-              <.input
-                type="small_number"
-                name="quantity"
-                id={"item_quantity-" <> item.id}
-                value={FormatNumber.format(item.quantity)}
-                field={item.quantity_form[:quantity]}
-                phx-debounce="200"
-              />
-            </.small_form>
-          </:col>
-          <:col :let={item} label="Unit">
-            <.small_form
-              for={item.unit_form}
-              id={"unit-form-" <> item.id}
-              phx-change={"update_unit-" <> item.id}
-              phx-submit={"update_unit-" <> item.id}
-            >
-              <.input
-                type="select"
-                name="unit"
-                id={"item_unit-" <> item.id}
-                value={item.unit}
-                field={item.unit_form[:unit]}
-                options={Item.units()}
-              />
-            </.small_form>
-          </:col>
-          <:col :let={item} label="Expiration"><%= item.expiration %></:col>
-          <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
-          <:action :let={item}>
-            <.link
-              phx-disable-with="Deleting..."
-              phx-click={
-                JS.push("delete", value: %{id: item.id})
-                |> JS.transition({"ease-in-out duration-300", "opacity-100", "opacity-50"},
-                  time: 300,
-                  to: "#item-#{item.id}"
-                )
-              }
-            >
-              Delete
-            </.link>
-          </:action>
-        </.table>
-      <% end %>
+        <% end %>
+      </div>
     </.async_result>
     """
   end
 
-  defp days_left(nil), do: nil
-
-  defp days_left(expiration) do
-    Date.diff(expiration, Date.utc_today())
-  end
-
   @impl true
   def handle_info({:update, new_household}, state) do
-    original_household = prepare_household_for_frontend(new_household)
-    filtered = filter_items(original_household.items, state.assigns.search_form["search"].value)
-
-    household = Map.put(original_household, :items, filtered)
+    household = prepare_household_for_frontend(new_household)
 
     state =
       assign(state,
-        household: AsyncResult.ok(household),
-        original_household: original_household
+        household: AsyncResult.ok(household)
       )
 
     {:noreply, state}
-  end
-
-  def handle_info({PantryWeb.Stockpile.AddItemForm, {:added, _item}}, state) do
-    # TODO add item in the list
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_event("delete", %{"id" => id}, socket) do
-    Pantry.Stockpile.Household.Server.delete_item(socket.assigns.household_id, id)
-    {:noreply, socket}
-  end
-
-  def handle_event("update_quantity-" <> item_id, %{"quantity" => ""}, socket) do
-    form =
-      %Item{}
-      |> Item.update_quantity("")
-      |> to_form(action: :validate)
-
-    items =
-      socket.assigns.household.result.items
-      |> Enum.map(fn item ->
-        if item.id == item_id do
-          Map.put(item, :form, form)
-        else
-          item
-        end
-      end)
-
-    {:noreply,
-     assign(socket, household: AsyncResult.ok(%{socket.assigns.household.result | items: items}))}
-  end
-
-  def handle_event("update_quantity-" <> item_id, %{"quantity" => value}, socket) do
-    case Float.parse(value) do
-      {val, ""} ->
-        Pantry.Stockpile.Household.Server.update_item_quantity(
-          socket.assigns.household_id,
-          item_id,
-          val
-        )
-
-      _ ->
-        nil
-    end
-
-    {:noreply, socket}
-  end
-
-  def handle_event("update_unit-" <> item_id, %{"unit" => value}, socket) do
-    Pantry.Stockpile.Household.Server.update_item_unit(
-      socket.assigns.household_id,
-      item_id,
-      value
-    )
-
-    {:noreply, socket}
-  end
-
-  def handle_event("search", %{"_target" => ["search"], "search" => value}, socket) do
-    socket = search(socket, value)
-    {:noreply, socket}
-  end
-
-  def handle_event("save", %{"search" => value}, socket) do
-    socket = search(socket, value)
-    {:noreply, socket}
   end
 
   defp remove_yourself(users, email) do
@@ -292,29 +150,5 @@ defmodule PantryWeb.StockpileLive do
       end)
 
     Map.put(household, :items, items)
-  end
-
-  defp search(socket, value) do
-    items = socket.assigns.original_household.items
-    filtered = filter_items(items, value)
-
-    assign(socket,
-      household: AsyncResult.ok(Map.put(socket.assigns.original_household, :items, filtered)),
-      search_form: search_form(value)
-    )
-  end
-
-  defp search_form(value), do: to_form(%{"search" => value})
-
-  defp filter_items(items, ""), do: items
-
-  defp filter_items(items, search) do
-    items
-    |> Enum.filter(fn item ->
-      String.contains?(
-        String.downcase(item.name),
-        String.downcase(search)
-      )
-    end)
   end
 end

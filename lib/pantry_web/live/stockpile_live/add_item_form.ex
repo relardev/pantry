@@ -62,9 +62,7 @@ defmodule PantryWeb.Stockpile.AddItemForm do
       |> unpack_quantity()
 
     with %Ecto.Changeset{errors: []} <- Item.changeset(%Item{}, item_params),
-         {:ok, item} <- Pantry.Stockpile.Household.Server.add_item(household_id, item_params) do
-      notify_parent({:added, item})
-
+         {:ok, _} <- Pantry.Stockpile.Household.Server.add_item(household_id, item_params) do
       {:noreply,
        socket
        |> assign(item: %Item{})
@@ -118,8 +116,6 @@ defmodule PantryWeb.Stockpile.AddItemForm do
       {:error, _} -> item_params
     end
   end
-
-  defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
 
   def parse_quantity(input) do
     case Regex.run(~r/^([\d.]+)\s*([a-zA-Z]+)$/, input) do
