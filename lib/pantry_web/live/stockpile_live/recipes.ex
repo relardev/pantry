@@ -1,8 +1,7 @@
 defmodule PantryWeb.StockpileLive.Recipes do
   use PantryWeb, :live_component
 
-  alias PantryWeb.StockpileLive.FormatNumber
-  alias Pantry.House.Item
+  alias Pantry.House.Recipe
 
   @impl true
   def mount(socket) do
@@ -17,13 +16,36 @@ defmodule PantryWeb.StockpileLive.Recipes do
      socket
      |> assign(household_id: assigns.household_id)
      |> assign(original_recipes: recipes)
-     |> assign(items: filter_recipes(recipes, socket.assigns.search_form["search"].value))}
+     |> assign(recipes: filter_recipes(recipes, socket.assigns.search_form["search"].value))}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div></div>
+    <div>
+      <.live_component
+        module={PantryWeb.Stockpile.AddRecipeForm}
+        id="add-recipe-form"
+        household_id={@household_id}
+        title="Add Recipe"
+        recipe={%Recipe{}}
+      />
+      <.inline_form
+        for={@search_form}
+        id="search-form"
+        phx-change="search"
+        phx-submit="save"
+        phx-target={@myself}
+      >
+        <.input field={@search_form[:search]} type="text" phx-debounce="200" placeholder="Search..." />
+      </.inline_form>
+
+      <.table id="recipes" rows={@recipes} row_id={&("recipe-" <> &1.id)}>
+        <:col :let={recipe} label="Name"><%= recipe.name %></:col>
+        <:col :let={recipe} label="Ingredients"><%= recipe.ingredients %></:col>
+        <:col :let={recipe} label="Instructions"><%= recipe.instructions %></:col>
+      </.table>
+    </div>
     """
   end
 
@@ -60,52 +82,7 @@ defmodule PantryWeb.StockpileLive.Recipes do
   end
 
   def handle_event("delete", %{"id" => id}, socket) do
-    Pantry.Stockpile.Household.Server.delete_item(socket.assigns.household_id, id)
-    {:noreply, socket}
-  end
-
-  def handle_event("update_quantity-" <> item_id, %{"quantity" => ""}, socket) do
-    form =
-      %Item{}
-      |> Item.update_quantity("")
-      |> to_form(action: :validate)
-
-    items =
-      socket.assigns.items
-      |> Enum.map(fn item ->
-        if item.id == item_id do
-          Map.put(item, :form, form)
-        else
-          item
-        end
-      end)
-
-    {:noreply, assign(socket, items: items)}
-  end
-
-  def handle_event("update_quantity-" <> item_id, %{"quantity" => value}, socket) do
-    case Float.parse(value) do
-      {val, ""} ->
-        Pantry.Stockpile.Household.Server.update_item_quantity(
-          socket.assigns.household_id,
-          item_id,
-          val
-        )
-
-      _ ->
-        nil
-    end
-
-    {:noreply, socket}
-  end
-
-  def handle_event("update_unit-" <> item_id, %{"unit" => value}, socket) do
-    Pantry.Stockpile.Household.Server.update_item_unit(
-      socket.assigns.household_id,
-      item_id,
-      value
-    )
-
+    Pantry.Stockpile.Household.Server.delete_recipe(socket.assigns.household_id, id)
     {:noreply, socket}
   end
 

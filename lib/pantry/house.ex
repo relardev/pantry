@@ -9,6 +9,7 @@ defmodule Pantry.House do
   alias Pantry.House.Household
   alias Pantry.House.HouseholdUser
   alias Pantry.House.Item
+  alias Pantry.House.Recipe
 
   @doc """
   Returns the list of households.
@@ -42,7 +43,7 @@ defmodule Pantry.House do
     items_query = from(i in Item, order_by: i.expiration)
 
     Household
-    |> preload([:users, items: ^items_query])
+    |> preload([:users, :recipes, items: ^items_query])
     |> Repo.get!(id)
   end
 
@@ -340,5 +341,15 @@ defmodule Pantry.House do
     %Item{id: id}
     |> Item.update_unit(unit)
     |> Repo.update()
+  end
+
+  def create_recipe(attrs) do
+    %Recipe{}
+    |> Recipe.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def delete_recipe(id) do
+    Repo.delete(%Recipe{id: id})
   end
 end

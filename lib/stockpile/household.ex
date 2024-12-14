@@ -5,6 +5,10 @@ end
 defmodule Pantry.Stockpile.Household.Server do
   use GenServer
 
+  def add_recipe(id, recipe) do
+    GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_recipe, recipe}, 10_000)
+  end
+
   def add_item(id, item) do
     GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_item, item}, 10_000)
   end
@@ -102,6 +106,15 @@ defmodule Pantry.Stockpile.Household.Server do
   @impl true
   def handle_call(:get_household, _from, household) do
     {:reply, household, household}
+  end
+
+  def handle_call({:add_recipe, recipe}, _from, household) do
+    {:ok, recipe} = Pantry.House.create_recipe(recipe)
+
+    household = Map.put(household, :recipes, [recipe | household.recipes])
+
+    broadcast_update(household)
+    {:reply, {:ok, recipe}, household}
   end
 
   def handle_call({:add_item, item}, _from, household) do
