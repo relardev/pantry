@@ -6,7 +6,8 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
   def render(assigns) do
     ~H"""
     <div>
-      <.inline_form
+      New Recipe
+      <.simple_form
         for={@form}
         id="add-recipe-form"
         phx-target={@myself}
@@ -19,7 +20,7 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
         <:actions>
           <.button phx-disable-with="Saving...">Add</.button>
         </:actions>
-      </.inline_form>
+      </.simple_form>
     </div>
     """
   end
@@ -49,6 +50,8 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
 
     with %Ecto.Changeset{errors: []} <- Recipe.changeset(%Recipe{}, recipe_params),
          {:ok, _} <- Pantry.Stockpile.Household.Server.add_recipe(household_id, recipe_params) do
+      socket.assigns.on_success.()
+
       {:noreply,
        socket
        |> assign(recipe: %Recipe{})

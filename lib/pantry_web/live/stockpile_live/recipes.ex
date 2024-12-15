@@ -7,7 +7,8 @@ defmodule PantryWeb.StockpileLive.Recipes do
   def mount(socket) do
     {:ok,
      socket
-     |> assign(search_form: search_form(""))}
+     |> assign(search_form: search_form(""))
+     |> assign(action: :list)}
   end
 
   @impl true
@@ -19,17 +20,30 @@ defmodule PantryWeb.StockpileLive.Recipes do
      |> assign(recipes: filter_recipes(recipes, socket.assigns.search_form["search"].value))}
   end
 
+  def update(%{modal: "close"}, socket) do
+    {:ok, assign(socket, action: "list")}
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
     <div>
-      <.live_component
-        module={PantryWeb.Stockpile.AddRecipeForm}
-        id="add-recipe-form"
-        household_id={@household_id}
-        title="Add Recipe"
-        recipe={%Recipe{}}
-      />
+      <.link phx-target={@myself} phx-click={JS.push("action_add")}>(+) Add Recipe</.link>
+      <.modal
+        :if={@action == :add_recipe}
+        id="add-recipe-modal"
+        show
+        on_cancel={JS.push("action_list", target: @myself)}
+      >
+        <.live_component
+          module={PantryWeb.Stockpile.AddRecipeForm}
+          id="add-recipe-form"
+          household_id={@household_id}
+          title="Add Recipe"
+          recipe={%Recipe{}}
+          on_success={fn -> send_update(@myself, modal: "close") end}
+        />
+      </.modal>
       <.inline_form
         for={@search_form}
         id="search-form"
@@ -44,15 +58,24 @@ defmodule PantryWeb.StockpileLive.Recipes do
         <:col :let={recipe} label="Name"><%= recipe.name %></:col>
         <:col :let={recipe} label="Ingredients"><%= recipe.ingredients %></:col>
         <:col :let={recipe} label="Instructions"><%= recipe.instructions %></:col>
+        <:action :let={recipe}>
+          <.link
+            phx-disable-with="Deleting..."
+            phx-target={@myself}
+            phx-click={
+              JS.push("delete", value: %{id: recipe.id})
+              |> JS.transition({"ease-in-out duration-300", "opacity-100", "opacity-50"},
+                time: 300,
+                to: "#recipe-#{recipe.id}"
+              )
+            }
+          >
+            Delete
+          </.link>
+        </:action>
       </.table>
     </div>
     """
-  end
-
-  defp days_left(nil), do: nil
-
-  defp days_left(expiration) do
-    Date.diff(expiration, Date.utc_today())
   end
 
   defp search_form(value), do: to_form(%{"search" => value})
@@ -84,6 +107,14 @@ defmodule PantryWeb.StockpileLive.Recipes do
   def handle_event("delete", %{"id" => id}, socket) do
     Pantry.Stockpile.Household.Server.delete_recipe(socket.assigns.household_id, id)
     {:noreply, socket}
+  end
+
+  def handle_event("action_add", _, socket) do
+    {:noreply, assign(socket, action: :add_recipe)}
+  end
+
+  def handle_event("action_list", _, socket) do
+    {:noreply, assign(socket, action: :list)}
   end
 
   defp search(socket, value) do

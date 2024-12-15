@@ -8,7 +8,8 @@ defmodule Pantry.House.Recipe do
     field :name, :string
     field :instructions, :string
     field :ingredients, :string
-    field :household_id, :binary_id
+
+    belongs_to :household, Pantry.House.Household
 
     timestamps(type: :utc_datetime)
   end
@@ -16,7 +17,10 @@ defmodule Pantry.House.Recipe do
   @doc false
   def changeset(recipe, attrs) do
     recipe
-    |> cast(attrs, [:name, :ingredients, :instructions])
-    |> validate_required([:name, :ingredients, :instructions])
+    |> cast(attrs, [:name, :ingredients, :instructions, :household_id])
+    |> validate_required([:name, :ingredients, :instructions, :household_id])
+    |> unique_constraint([:name, :household_id],
+      name: "recipes_name_household_id_index"
+    )
   end
 end

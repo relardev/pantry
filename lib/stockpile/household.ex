@@ -9,6 +9,14 @@ defmodule Pantry.Stockpile.Household.Server do
     GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_recipe, recipe}, 10_000)
   end
 
+  def delete_recipe(id, recipe_id) do
+    GenServer.call(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:delete_recipe, recipe_id},
+      10_000
+    )
+  end
+
   def add_item(id, item) do
     GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_item, item}, 10_000)
   end
@@ -109,6 +117,7 @@ defmodule Pantry.Stockpile.Household.Server do
   end
 
   def handle_call({:add_recipe, recipe}, _from, household) do
+    recipe = Map.put(recipe, "household_id", household.id)
     {:ok, recipe} = Pantry.House.create_recipe(recipe)
 
     household = Map.put(household, :recipes, [recipe | household.recipes])
@@ -118,6 +127,7 @@ defmodule Pantry.Stockpile.Household.Server do
   end
 
   def handle_call({:add_item, item}, _from, household) do
+    item = Map.put(item, :household_id, household.id)
     {:ok, item} = Pantry.House.create_item(item)
 
     new_items =
@@ -146,6 +156,15 @@ defmodule Pantry.Stockpile.Household.Server do
     {:ok, _} = Pantry.House.delete_item(item_id)
     items = Enum.reject(household.items, fn item -> item.id == item_id end)
     household = Map.put(household, :items, items)
+    broadcast_update(household)
+
+    {:reply, :ok, household}
+  end
+
+  def handle_call({:delete_recipe, recipe_id}, _from, household) do
+    {:ok, _} = Pantry.House.delete_recipe(recipe_id)
+    recipes = Enum.reject(household.recipes, fn recipe -> recipe.id == recipe_id end)
+    household = Map.put(household, :recipes, recipes)
     broadcast_update(household)
 
     {:reply, :ok, household}

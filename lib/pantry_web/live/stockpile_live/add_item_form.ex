@@ -58,7 +58,6 @@ defmodule PantryWeb.Stockpile.AddItemForm do
 
     item_params =
       item_params
-      |> Map.put("household_id", household_id)
       |> unpack_quantity()
 
     with %Ecto.Changeset{errors: []} <- Item.changeset(%Item{}, item_params),

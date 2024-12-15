@@ -1,7 +1,6 @@
 defmodule PantryWeb.StockpileLive do
   use PantryWeb, :live_view
 
-  alias Pantry.House.Item
   alias Phoenix.LiveView.AsyncResult
 
   @impl true
