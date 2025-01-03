@@ -113,6 +113,7 @@ defmodule PantryWeb.StockpileLive do
             module={PantryWeb.StockpileLive.Items}
             id="items_list"
             items={household.items}
+            item_types={household.item_types}
             household_id={household.id}
           />
         <% end %>

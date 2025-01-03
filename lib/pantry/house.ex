@@ -9,6 +9,7 @@ defmodule Pantry.House do
   alias Pantry.House.Household
   alias Pantry.House.HouseholdUser
   alias Pantry.House.Item
+  alias Pantry.House.ItemType
   alias Pantry.House.Recipe
 
   @doc """
@@ -41,9 +42,15 @@ defmodule Pantry.House do
   """
   def get_household_with_users!(id) do
     items_query = from(i in Item, order_by: i.expiration)
+    item_types_query = from(it in ItemType, order_by: it.name)
 
     Household
-    |> preload([:users, :recipes, items: ^items_query])
+    |> preload([
+      :users,
+      :recipes,
+      items: ^items_query,
+      item_types: ^item_types_query
+    ])
     |> Repo.get!(id)
   end
 
@@ -324,6 +331,12 @@ defmodule Pantry.House do
   def create_item(attrs) do
     %Item{}
     |> Item.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def create_item_type(attrs) do
+    %ItemType{}
+    |> ItemType.changeset(attrs)
     |> Repo.insert()
   end
 

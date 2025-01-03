@@ -56,9 +56,14 @@ defmodule PantryWeb.Stockpile.AddItemForm do
   def handle_event("save", %{"item" => item_params}, socket) do
     household_id = socket.assigns.household_id
 
+    item_type_id =
+      Pantry.Stockpile.Household.Server.get_or_create_item_type(household_id, item_params["name"])
+
     item_params =
       item_params
       |> unpack_quantity()
+      |> Map.put("item_type_id", item_type_id)
+      |> Map.put("household_id", household_id)
 
     with %Ecto.Changeset{errors: []} <- Item.changeset(%Item{}, item_params),
          {:ok, _} <- Pantry.Stockpile.Household.Server.add_item(household_id, item_params) do

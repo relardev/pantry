@@ -12,16 +12,20 @@ defmodule PantryWeb.StockpileLive.Items do
   end
 
   @impl true
-  def update(%{items: items} = assigns, socket) do
+  def update(%{items: items, item_types: item_types} = assigns, socket) do
+    items =
+      Enum.map(items, &add_name(&1, item_types))
+      |> prepare_items_for_frontend()
+
     {:ok,
      socket
      |> assign(household_id: assigns.household_id)
      |> assign(original_items: items)
+     |> assign(item_types: item_types)
      |> assign(
        items:
          items
          |> filter_items(socket.assigns.search_form["search"].value)
-         |> prepare_items_for_frontend()
      )}
   end
 
@@ -205,5 +209,13 @@ defmodule PantryWeb.StockpileLive.Items do
       |> Map.put(:quantity_form, to_form(Item.update_quantity(item, item.quantity)))
       |> Map.put(:unit_form, to_form(Item.update_unit(item, item.unit)))
     end)
+  end
+
+  defp add_name(item, item_types) do
+    item
+    |> Map.put(
+      :name,
+      Enum.find(item_types, fn item_type -> item.item_type_id == item_type.id end).name
+    )
   end
 end

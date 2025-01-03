@@ -21,6 +21,10 @@ defmodule Pantry.Stockpile.Household.Server do
     GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_item, item}, 10_000)
   end
 
+  def get_or_create_item_type(id, name) do
+    GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:get_or_create_item_type, name})
+  end
+
   def update_item_quantity(id, item_id, quantity) do
     GenServer.cast(
       Pantry.Stockpile.HouseholdRegistry.via(id),
@@ -127,7 +131,6 @@ defmodule Pantry.Stockpile.Household.Server do
   end
 
   def handle_call({:add_item, item}, _from, household) do
-    item = Map.put(item, :household_id, household.id)
     {:ok, item} = Pantry.House.create_item(item)
 
     new_items =
@@ -150,6 +153,21 @@ defmodule Pantry.Stockpile.Household.Server do
 
     broadcast_update(household)
     {:reply, {:ok, item}, household}
+  end
+
+  def handle_call({:get_or_create_item_type, name}, _from, household) do
+    item_type = Enum.find(household.item_types, fn it -> it.name == name end)
+
+    if item_type do
+      {:reply, item_type.id, household}
+    else
+      {:ok, item_type} = Pantry.House.create_item_type(%{name: name, household_id: household.id})
+      item_types = [item_type | household.item_types]
+      household = Map.put(household, :item_types, item_types)
+      broadcast_update(household)
+
+      {:reply, item_type.id, household}
+    end
   end
 
   def handle_call({:delete_item, item_id}, _from, household) do

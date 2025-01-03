@@ -11,12 +11,12 @@ defmodule Pantry.House.Item do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "items" do
-    field :name, :string
     field :quantity, :float
     field :unit, Ecto.Enum, values: @unit_enum
     field :expiration, :date
 
     belongs_to :household, Pantry.House.Household
+    belongs_to :item_type, Pantry.House.ItemType
 
     timestamps(type: :utc_datetime)
   end
@@ -26,8 +26,8 @@ defmodule Pantry.House.Item do
     attrs = convert_unit_to_atom(attrs)
 
     item
-    |> cast(attrs, [:name, :quantity, :expiration, :unit, :household_id])
-    |> validate_required([:name, :household_id])
+    |> cast(attrs, [:quantity, :expiration, :unit, :household_id, :item_type_id])
+    |> validate_required([:item_type_id, :household_id])
     |> validate_number(:quantity, greater_than: 0)
     |> validate_inclusion(:unit, @unit_enum)
     |> unique_constraint([:name, :household_id],
