@@ -58,7 +58,11 @@ defmodule PantryWeb.StockpileLive.Recipes do
 
       <.table id="recipes" rows={@recipes} row_id={&("recipe-" <> &1.id)}>
         <:col :let={recipe} label="Name"><%= recipe.name %></:col>
-        <:col :let={recipe} label="Ingredients"><%= recipe.ingredients %></:col>
+        <:col :let={recipe} label="Ingredients">
+          <%= for ing <- format_ingredients(recipe.ingredients) do %>
+            <%= ing %> <br />
+          <% end %>
+        </:col>
         <:col :let={recipe} label="Instructions"><%= recipe.instructions %></:col>
         <:action :let={recipe}>
           <.link
@@ -78,6 +82,13 @@ defmodule PantryWeb.StockpileLive.Recipes do
       </.table>
     </div>
     """
+  end
+
+  defp format_ingredients(ingredients) do
+    JSON.decode!(ingredients)
+    |> Enum.map(fn %{"name" => name, "quantity" => quantity} ->
+      "#{name} - #{quantity}"
+    end)
   end
 
   defp search_form(value), do: to_form(%{"search" => value})

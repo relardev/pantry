@@ -178,6 +178,7 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
     recipe_params =
       recipe_params
       |> Map.put("household_id", household_id)
+      |> Map.put("ingredients", JSON.encode!(socket.assigns.ingredients))
 
     with %Ecto.Changeset{errors: []} <- Recipe.changeset(%Recipe{}, recipe_params),
          {:ok, _} <- Pantry.Stockpile.Household.Server.add_recipe(household_id, recipe_params) do
