@@ -49,7 +49,7 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
           <% end %>
         </div>
         <div id="ingredientsList">
-          <div>
+          <div class="mt-10 m-2 flex flex-row">
             <.input
               name="search_ingredient"
               value={@search_ingredient}
@@ -66,18 +66,18 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
                 <option value={ingredient}><%= ingredient %></option>
               <% end %>
             </datalist>
+            <.input
+              name="quantity"
+              value={@quantity}
+              type="text"
+              placeholder="3unit"
+              label="Quantity"
+              phx-change="update_quantity"
+              phx-target={@myself}
+              phx-debounce="200"
+            />
+            <.button type="button" phx-click="add_ingredient" phx-target={@myself}>+</.button>
           </div>
-          <.input
-            name="quantity"
-            value={@quantity}
-            type="text"
-            placeholder="3unit"
-            label="Quantity"
-            phx-change="update_quantity"
-            phx-target={@myself}
-            phx-debounce="200"
-          />
-          <.button type="button" phx-click="add_ingredient" phx-target={@myself}>Add</.button>
         </div>
         <.input
           field={@form[:instructions]}
