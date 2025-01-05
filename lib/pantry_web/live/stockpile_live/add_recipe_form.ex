@@ -4,13 +4,9 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
 
   @impl true
   def mount(socket) do
-    form =
-      Recipe.changeset(%Recipe{}, %{})
-      |> to_form()
-
     {:ok,
      socket
-     |> assign(form: form)
+     |> assign(form: nil)
      |> assign(search_ingredient: "")
      |> assign(quantity: "")
      |> assign(ingredients: [])
@@ -30,17 +26,24 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
         phx-change="validate"
         phx-submit="save"
       >
-        <.input field={@form[:name]} type="text" label="Name" id="first-input" phx-debounce="200" />
+        <.input
+          field={@form[:name]}
+          placeholder="Scrambled eggs..."
+          type="text"
+          label="Name"
+          id="first-input"
+          phx-debounce="200"
+        />
         <div id="submitedIngredients">
           <%= for ingredient <- @ingredients do %>
             <div>
-              <span><%= ingredient.name %></span>
+              <span><%= ingredient.name <> ": " <> ingredient.quantity %></span>
               <.button
                 type="button"
                 phx-click={"remove_ingredient-" <> ingredient.id}
                 phx-target={@myself}
               >
-                Remove
+                x
               </.button>
             </div>
           <% end %>
@@ -52,7 +55,7 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
               value={@search_ingredient}
               type="text"
               label="Search ingredient"
-              placeholder="Search ingredient"
+              placeholder="Egg"
               list="ingredientOptions"
               phx-change="suggest_ingredient"
               phx-target={@myself}
@@ -68,7 +71,7 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
             name="quantity"
             value={@quantity}
             type="text"
-            placeholder="Quantity"
+            placeholder="3unit"
             label="Quantity"
             phx-change="update_quantity"
             phx-target={@myself}
@@ -76,9 +79,15 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
           />
           <.button type="button" phx-click="add_ingredient" phx-target={@myself}>Add</.button>
         </div>
-        <.input field={@form[:instructions]} type="textarea" label="Instructions" phx-debounce="200" />
+        <.input
+          field={@form[:instructions]}
+          placeholder="Preheat the pan..."
+          type="textarea"
+          label="Instructions"
+          phx-debounce="200"
+        />
         <:actions>
-          <.button phx-disable-with="Saving...">Add</.button>
+          <.button phx-disable-with="Saving...">Save</.button>
         </:actions>
       </.simple_form>
     </div>
@@ -87,9 +96,14 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
 
   @impl true
   def update(assigns, socket) do
+    form =
+      Recipe.changeset(assigns.recipe, %{})
+      |> to_form()
+
     {:ok,
      socket
      |> assign(assigns)
+     |> assign(form: form)
      |> assign(filtered_ingredients: filter(assigns.item_types, socket.assigns.search_ingredient))}
   end
 
@@ -157,7 +171,10 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
         |> assign(ingredients: socket.assigns.ingredients ++ [ingredient])
       end
 
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(search_ingredient: "")
+     |> assign(quantity: "")}
   end
 
   def handle_event(
