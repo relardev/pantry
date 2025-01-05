@@ -16,6 +16,7 @@ defmodule PantryWeb.StockpileLive.Recipes do
     {:ok,
      socket
      |> assign(household_id: assigns.household_id)
+     |> assign(item_types: assigns.item_types)
      |> assign(original_recipes: recipes)
      |> assign(recipes: filter_recipes(recipes, socket.assigns.search_form["search"].value))}
   end
@@ -41,6 +42,7 @@ defmodule PantryWeb.StockpileLive.Recipes do
           household_id={@household_id}
           title="Add Recipe"
           recipe={%Recipe{}}
+          item_types={@item_types}
           on_success={fn -> send_update(@myself, modal: "close") end}
         />
       </.modal>
