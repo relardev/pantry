@@ -7,8 +7,8 @@ defmodule Pantry.House.Recipe do
   schema "recipes" do
     field :name, :string
     field :instructions, :string
-    field :ingredients, :string
 
+    has_many :ingredients, Pantry.House.RecipeIngredient
     belongs_to :household, Pantry.House.Household
 
     timestamps(type: :utc_datetime)
