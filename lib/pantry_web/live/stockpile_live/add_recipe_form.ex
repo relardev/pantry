@@ -1,6 +1,7 @@
 defmodule PantryWeb.Stockpile.AddRecipeForm do
   use PantryWeb, :live_component
   alias Pantry.House.Recipe
+  alias Pantry.House.RecipeIngredient
 
   @impl true
   def mount(socket) do
@@ -33,7 +34,30 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
           label="Name"
           id="first-input"
           phx-debounce="200"
-        />
+        /> Ingredients
+        <.inputs_for :let={ef} field={@form[:ingredients]}>
+          <.input type="text" field={ef[:name]} placeholder="name" />
+          <.input type="text" field={ef[:quantity]} placeholder="quantity" />
+          <.input type="text" field={ef[:unit]} placeholder="unit" />
+          <button
+            type="button"
+            name="recipe[ingredient_drop][]"
+            value={ef.index}
+            phx-click={JS.dispatch("change")}
+          >
+            <.icon name="hero-x-mark" class="w-6 h-6 relative top-2" />
+          </button>
+        </.inputs_for>
+
+        <button
+          type="button"
+          name="recipe[ingredients][]"
+          value="new"
+          phx-click={JS.dispatch("change")}
+        >
+          add more
+        </button>
+
         <div id="submitedIngredients">
           <%= for ingredient <- @ingredients do %>
             <div>
@@ -98,6 +122,7 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
   def update(assigns, socket) do
     form =
       Recipe.changeset(assigns.recipe, %{})
+      |> Ecto.Changeset.put_assoc(:ingredients, [%RecipeIngredient{}])
       |> to_form()
 
     {:ok,
@@ -177,25 +202,24 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
      |> assign(quantity: "")}
   end
 
-  def handle_event(
-        "remove_ingredient-" <> ingredient_id,
-        _,
-        socket
-      ) do
-    {:noreply,
-     socket
-     |> assign(
-       ingredients: Enum.filter(socket.assigns.ingredients, fn i -> i.id != ingredient_id end)
-     )}
-  end
-
   def handle_event("save", %{"recipe" => recipe_params}, socket) do
     household_id = socket.assigns.household_id
+
+    ingredients =
+      Map.get(recipe_params, "ingredients")
+      |> Enum.map(fn {_id, ingredient} ->
+        item_type_id =
+          Enum.find(socket.assigns.item_types, &(&1.name == Map.get(ingredient, "name"))).id
+
+        Map.put(ingredient, "item_type_id", item_type_id)
+      end)
 
     recipe_params =
       recipe_params
       |> Map.put("household_id", household_id)
-      |> Map.put("ingredients", JSON.encode!(socket.assigns.ingredients))
+      |> Map.put("ingredients", ingredients)
+
+    dbg(recipe_params)
 
     with %Ecto.Changeset{errors: []} <- Recipe.changeset(%Recipe{}, recipe_params),
          {:ok, _} <- Pantry.Stockpile.Household.Server.add_recipe(household_id, recipe_params) do

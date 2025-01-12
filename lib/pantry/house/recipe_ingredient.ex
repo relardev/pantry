@@ -17,9 +17,11 @@ defmodule Pantry.House.RecipeIngredient do
   @doc false
   def changeset(recipe_ingredient, attrs) do
     recipe_ingredient
-    |> cast(attrs, [:quantity, :unit])
-    |> validate_required([:quantity, :unit])
+    |> cast(attrs, [:quantity, :unit, :item_type_id, :recipe_id])
+    |> validate_required([:quantity, :unit, :item_type_id])
     |> validate_inclusion(:unit, Pantry.House.Unit.units())
-    |> unique_constraint([:item_type_id, :recipe_id])
+    |> unique_constraint([:item_type_id, :recipe_id],
+      name: "recipe_ingredients_item_type_id_recipe_id_index"
+    )
   end
 end

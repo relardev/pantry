@@ -13,6 +13,8 @@ defmodule PantryWeb.StockpileLive.Recipes do
 
   @impl true
   def update(%{recipes: recipes} = assigns, socket) do
+    recipes = prepare_recipe_ingredients_for_frontend(recipes, assigns.item_types)
+
     {:ok,
      socket
      |> assign(household_id: assigns.household_id)
@@ -85,9 +87,15 @@ defmodule PantryWeb.StockpileLive.Recipes do
   end
 
   defp format_ingredients(ingredients) do
-    JSON.decode!(ingredients)
-    |> Enum.map(fn %{"name" => name, "quantity" => quantity} ->
-      "#{name} - #{quantity}"
+    ingredients
+    |> Enum.map(fn %{name: name, quantity: quantity, unit: unit} ->
+      unit =
+        case unit do
+          :unit -> ""
+          u -> u
+        end
+
+      "#{name} - #{quantity}#{unit}"
     end)
   end
 
@@ -136,5 +144,18 @@ defmodule PantryWeb.StockpileLive.Recipes do
     assign(socket,
       recipes: filtered
     )
+  end
+
+  defp prepare_recipe_ingredients_for_frontend(recipes, item_types) do
+    Enum.map(recipes, fn recipe ->
+      ingredients =
+        Enum.map(recipe.ingredients, fn ingredient ->
+          name = Enum.find(item_types, &(&1.id == ingredient.item_type_id)).name
+
+          Map.put(ingredient, :name, name)
+        end)
+
+      Map.put(recipe, :ingredients, ingredients)
+    end)
   end
 end
