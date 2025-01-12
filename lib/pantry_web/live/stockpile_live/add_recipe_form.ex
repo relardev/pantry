@@ -24,7 +24,7 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
         for={@form}
         id="add-recipe-form"
         phx-target={@myself}
-        phx-change="validate"
+        phx-change="change"
         phx-submit="save"
       >
         <.input
@@ -35,14 +35,14 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
           id="first-input"
           phx-debounce="200"
         /> Ingredients
-        <.inputs_for :let={ef} field={@form[:ingredients]}>
-          <.input type="text" field={ef[:name]} placeholder="name" />
-          <.input type="text" field={ef[:quantity]} placeholder="quantity" />
-          <.input type="text" field={ef[:unit]} placeholder="unit" />
+        <.inputs_for :let={ingredient_form} field={@form[:ingredients]}>
+          <.input type="text" field={ingredient_form[:name]} placeholder="name" />
+          <.input type="text" field={ingredient_form[:quantity]} placeholder="quantity" />
+          <.input type="text" field={ingredient_form[:unit]} placeholder="unit" />
           <button
             type="button"
             name="recipe[ingredient_drop][]"
-            value={ef.index}
+            value={ingredient_form.index}
             phx-click={JS.dispatch("change")}
           >
             <.icon name="hero-x-mark" class="w-6 h-6 relative top-2" />
@@ -145,7 +145,20 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
   end
 
   @impl true
-  def handle_event("validate", %{"recipe" => recipe_params}, socket) do
+  def handle_event("change", %{"recipe" => %{"ingredients" => ["new"]}}, socket) do
+    current_form = socket.assigns.form
+    current_ingredients = Ecto.Changeset.get_change(current_form.source, :ingredients, [])
+
+    updated_changeset =
+      current_form.source
+      |> Ecto.Changeset.put_assoc(:ingredients, current_ingredients ++ [%RecipeIngredient{}])
+
+    updated_form = to_form(updated_changeset)
+
+    {:noreply, assign(socket, form: updated_form)}
+  end
+
+  def handle_event("change", %{"recipe" => recipe_params}, socket) do
     changeset = Recipe.changeset(socket.assigns.recipe, recipe_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
