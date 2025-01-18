@@ -1,4 +1,4 @@
-defmodule PantryWeb.Stockpile.AddRecipeForm do
+defmodule PantryWeb.Stockpile.RecipeForm do
   use PantryWeb, :live_component
   alias Pantry.House.Recipe
   alias Pantry.House.RecipeIngredient
@@ -14,10 +14,32 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
   end
 
   @impl true
+  def update(assigns, socket) do
+    form =
+      if assigns.recipe == %Recipe{} do
+        Recipe.changeset(%Recipe{}, %{})
+        |> Ecto.Changeset.put_assoc(:ingredients, [%RecipeIngredient{}])
+        |> to_form()
+      else
+        Recipe.changeset(assigns.recipe, %{})
+        |> to_form()
+      end
+
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign(form: form)
+     |> assign(title: title(assigns.action, assigns.recipe))}
+  end
+
+  defp title(:new, _), do: "Add Recipe"
+  defp title(:edit, recipe), do: "Edit Recipe: " <> recipe.name
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
-      New Recipe
+      <%= @title %>
       <.simple_form
         for={@form}
         id="add-recipe-form"
@@ -103,19 +125,6 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
     """
   end
 
-  @impl true
-  def update(assigns, socket) do
-    form =
-      Recipe.changeset(assigns.recipe, %{})
-      |> Ecto.Changeset.put_assoc(:ingredients, [%RecipeIngredient{}])
-      |> to_form()
-
-    {:ok,
-     socket
-     |> assign(assigns)
-     |> assign(form: form)}
-  end
-
   defp filter(item_types, search) do
     item_types
     |> Enum.filter(
@@ -151,7 +160,7 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
 
   def handle_event("change", %{"recipe" => %{"ingredients" => ["new"]}}, socket) do
     current_form = socket.assigns.form
-    current_ingredients = Ecto.Changeset.get_change(current_form.source, :ingredients, [])
+    current_ingredients = Ecto.Changeset.get_assoc(current_form.source, :ingredients)
 
     updated_changeset =
       current_form.source
@@ -171,14 +180,20 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
         socket
       ) do
     current_form = socket.assigns.form
-    current_ingredients = Ecto.Changeset.get_change(current_form.source, :ingredients, [])
+    current_changeset = current_form.source
 
     updated_changeset =
-      current_form.source
-      |> Ecto.Changeset.put_assoc(
-        :ingredients,
-        List.delete_at(current_ingredients, String.to_integer(index))
-      )
+      current_changeset
+      |> update_in([Access.key(:changes), :ingredients], fn ingredients ->
+        case ingredients do
+          nil ->
+            current_ingredients = Ecto.Changeset.get_assoc(current_changeset, :ingredients)
+            List.delete_at(current_ingredients, String.to_integer(index))
+
+          list when is_list(list) ->
+            List.delete_at(list, String.to_integer(index))
+        end
+      end)
 
     updated_form = to_form(updated_changeset)
 
@@ -207,11 +222,41 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
 
     recipe_params =
       recipe_params
-      |> Map.put("household_id", household_id)
       |> Map.put("ingredients", ingredients)
+      |> Map.put("household_id", household_id)
 
+    save_recipe(socket.assigns.action, recipe_params, socket)
+  end
+
+  defp save_recipe(:edit, recipe_params, socket) do
+    changeset = Recipe.changeset(socket.assigns.recipe, recipe_params)
+
+    if changeset.valid? == true do
+      {:ok, recipe} =
+        Pantry.Stockpile.Household.Server.update_recipe(
+          socket.assigns.household_id,
+          socket.assigns.recipe.id,
+          recipe_params
+        )
+
+      socket.assigns.on_success.()
+
+      {:noreply,
+       socket
+       |> assign(recipe: recipe)
+       |> assign(form: to_form(Recipe.changeset(%Recipe{}, %{})))}
+    else
+      {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+    end
+  end
+
+  defp save_recipe(:new, recipe_params, socket) do
     with %Ecto.Changeset{errors: []} <- Recipe.changeset(%Recipe{}, recipe_params),
-         {:ok, _} <- Pantry.Stockpile.Household.Server.add_recipe(household_id, recipe_params) do
+         {:ok, _} <-
+           Pantry.Stockpile.Household.Server.add_recipe(
+             socket.assigns.household_id,
+             recipe_params
+           ) do
       socket.assigns.on_success.()
 
       {:noreply,

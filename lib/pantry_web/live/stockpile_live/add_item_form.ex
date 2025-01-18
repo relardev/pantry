@@ -86,7 +86,7 @@ defmodule PantryWeb.Stockpile.AddItemForm do
       end
 
     unit =
-      if value_exists_in_second?(@unit_options, unit) do
+      if value_exists_in_second?(Pantry.House.Unit.options(), unit) do
         unit
       else
         ""

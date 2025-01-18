@@ -8,7 +8,7 @@ defmodule Pantry.House.Recipe do
     field :name, :string
     field :instructions, :string
 
-    has_many :ingredients, Pantry.House.RecipeIngredient
+    has_many :ingredients, Pantry.House.RecipeIngredient, on_replace: :delete_if_exists
     belongs_to :household, Pantry.House.Household
 
     timestamps(type: :utc_datetime)

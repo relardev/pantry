@@ -8,7 +8,8 @@ defmodule PantryWeb.StockpileLive.Recipes do
     {:ok,
      socket
      |> assign(search_form: search_form(""))
-     |> assign(action: :list)}
+     |> assign(action: :list)
+     |> assign(selected_recipe: %Recipe{})}
   end
 
   @impl true
@@ -33,17 +34,19 @@ defmodule PantryWeb.StockpileLive.Recipes do
     <div>
       <.link phx-target={@myself} phx-click={JS.push("action_add")}>(+) Add Recipe</.link>
       <.modal
-        :if={@action == :add_recipe}
+        :if={@action in [:new, :edit]}
         id="add-recipe-modal"
         show
         on_cancel={JS.push("action_list", target: @myself)}
       >
         <.live_component
-          module={PantryWeb.Stockpile.AddRecipeForm}
+          module={PantryWeb.Stockpile.RecipeForm}
           id="add-recipe-form"
           household_id={@household_id}
           title="Add Recipe"
-          recipe={%Recipe{}}
+          action={@action}
+          recipe={@selected_recipe}
+          }
           item_types={@item_types}
           on_success={fn -> send_update(@myself, modal: "close") end}
         />
@@ -52,20 +55,24 @@ defmodule PantryWeb.StockpileLive.Recipes do
         for={@search_form}
         id="search-form"
         phx-change="search"
-        phx-submit="save"
+        phx-submit="search_submit"
         phx-target={@myself}
       >
         <.input field={@search_form[:search]} type="text" phx-debounce="200" placeholder="Search..." />
       </.inline_form>
 
-      <.table id="recipes" rows={@recipes} row_id={&("recipe-" <> &1.id)}>
+      <.table
+        id="recipes"
+        rows={@recipes}
+        row_id={&("recipe-" <> &1.id)}
+        row_click={fn recipe -> JS.push("action_edit", value: %{id: recipe.id}, target: @myself) end}
+      >
         <:col :let={recipe} label="Name"><%= recipe.name %></:col>
         <:col :let={recipe} label="Ingredients">
           <%= for ing <- format_ingredients(recipe.ingredients) do %>
             <%= ing %> <br />
           <% end %>
         </:col>
-        <:col :let={recipe} label="Instructions"><%= recipe.instructions %></:col>
         <:action :let={recipe}>
           <.link
             phx-disable-with="Deleting..."
@@ -107,20 +114,39 @@ defmodule PantryWeb.StockpileLive.Recipes do
   defp filter_recipes(recipes, search) do
     recipes
     |> Enum.filter(fn recipe ->
-      String.contains?(
-        String.downcase(recipe.name),
-        String.downcase(search)
-      )
+      Enum.any?([
+        String.contains?(
+          String.downcase(recipe.name),
+          String.downcase(search)
+        ),
+        String.contains?(
+          String.downcase(recipe.instructions),
+          String.downcase(search)
+        ),
+        Enum.any?(recipe.ingredients, fn ingredient ->
+          String.contains?(
+            String.downcase(ingredient.name),
+            String.downcase(search)
+          )
+        end)
+      ])
     end)
   end
 
   @impl true
+  def handle_event("action_edit", %{"id" => recipe_id}, socket) do
+    {:noreply,
+     socket
+     |> assign(action: :edit)
+     |> assign(selected_recipe: Enum.find(socket.assigns.original_recipes, &(&1.id == recipe_id)))}
+  end
+
   def handle_event("search", %{"_target" => ["search"], "search" => value}, socket) do
     socket = search(socket, value)
     {:noreply, socket}
   end
 
-  def handle_event("save", %{"search" => value}, socket) do
+  def handle_event("search_submit", %{"search" => value}, socket) do
     socket = search(socket, value)
     {:noreply, socket}
   end
@@ -131,7 +157,10 @@ defmodule PantryWeb.StockpileLive.Recipes do
   end
 
   def handle_event("action_add", _, socket) do
-    {:noreply, assign(socket, action: :add_recipe)}
+    {:noreply,
+     socket
+     |> assign(action: :new)
+     |> assign(selected_recipe: %Recipe{})}
   end
 
   def handle_event("action_list", _, socket) do

@@ -366,6 +366,39 @@ defmodule Pantry.House do
     |> Repo.insert()
   end
 
+  def update_recipe(recipe, attrs) do
+    recipe
+    |> Recipe.changeset(attrs)
+    |> update_ingredients(attrs)
+    |> Repo.update()
+  end
+
+  defp update_ingredients(changeset, attrs) do
+    current_ingredients = Ecto.Changeset.get_field(changeset, :ingredients) || []
+    new_ingredients = attrs[:ingredients] || []
+
+    updated_ingredients =
+      new_ingredients
+      |> Enum.map(&ensure_ingredient_struct/1)
+      |> Enum.concat(keep_removed_ingredients(current_ingredients, new_ingredients))
+
+    Ecto.Changeset.put_assoc(changeset, :ingredients, updated_ingredients)
+  end
+
+  defp ensure_ingredient_struct(%RecipeIngredient{} = ingredient), do: ingredient
+
+  defp ensure_ingredient_struct(ingredient_map) when is_map(ingredient_map) do
+    struct(RecipeIngredient, ingredient_map)
+  end
+
+  defp keep_removed_ingredients(current_ingredients, new_ingredients) do
+    new_ingredient_ids = Enum.map(new_ingredients, & &1.id)
+
+    Enum.filter(current_ingredients, fn ingredient ->
+      ingredient.id not in new_ingredient_ids
+    end)
+  end
+
   def delete_recipe(id) do
     Repo.delete(%Recipe{id: id})
   end
