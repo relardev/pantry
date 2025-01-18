@@ -1,5 +1,6 @@
 defmodule Pantry.Repo.Migrations.CreateItemTypes do
   use Ecto.Migration
+  import Ecto.Query
 
   def up do
     create table(:item_types, primary_key: false) do
