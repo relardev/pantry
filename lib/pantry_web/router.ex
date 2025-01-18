@@ -93,6 +93,7 @@ defmodule PantryWeb.Router do
       live "/app", StockpileLive, :overview
       live "/app/items", StockpileLive, :items
       live "/app/recipes", StockpileLive, :recipes
+      live "/app/recipes/:action", StockpileLive, :recipes
       live "/app/shopping-list", StockpileLive, :shopping_list
 
       live "/households", HouseholdLive.Index, :index

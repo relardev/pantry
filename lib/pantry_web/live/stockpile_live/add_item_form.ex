@@ -2,15 +2,6 @@ defmodule PantryWeb.Stockpile.AddItemForm do
   use PantryWeb, :live_component
   alias Pantry.House.Item
 
-  @unit_options [
-    {"kg", "kg"},
-    {"g", "g"},
-    {"unit", "unit"},
-    {"l", "l"},
-    {"ml", "ml"},
-    {"pack", "pack"}
-  ]
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -24,7 +15,7 @@ defmodule PantryWeb.Stockpile.AddItemForm do
       >
         <.input field={@form[:name]} type="text" label="Name" id="first-input" phx-debounce="200" />
         <.input field={@form[:quantity]} type="text" label="Quantity" phx-debounce="200" />
-        <.input field={@form[:unit]} type="select" label="Unit" options={unit_options()} />
+        <.input field={@form[:unit]} type="select" label="Unit" options={Pantry.House.Unit.options()} />
         <.input field={@form[:expiration]} type="date" label="Expiration" />
         <:actions>
           <.button phx-disable-with="Saving...">Add</.button>
@@ -33,8 +24,6 @@ defmodule PantryWeb.Stockpile.AddItemForm do
     </div>
     """
   end
-
-  defp unit_options(), do: @unit_options
 
   @impl true
   def update(%{item: item} = assigns, socket) do
@@ -56,10 +45,14 @@ defmodule PantryWeb.Stockpile.AddItemForm do
   def handle_event("save", %{"item" => item_params}, socket) do
     household_id = socket.assigns.household_id
 
+    item_type_id =
+      Pantry.Stockpile.Household.Server.get_or_create_item_type(household_id, item_params["name"])
+
     item_params =
       item_params
-      |> Map.put("household_id", household_id)
       |> unpack_quantity()
+      |> Map.put("item_type_id", item_type_id)
+      |> Map.put("household_id", household_id)
 
     with %Ecto.Changeset{errors: []} <- Item.changeset(%Item{}, item_params),
          {:ok, _} <- Pantry.Stockpile.Household.Server.add_item(household_id, item_params) do
@@ -93,7 +86,7 @@ defmodule PantryWeb.Stockpile.AddItemForm do
       end
 
     unit =
-      if value_exists_in_second?(@unit_options, unit) do
+      if value_exists_in_second?(Pantry.House.Unit.options(), unit) do
         unit
       else
         ""

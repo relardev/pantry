@@ -1,7 +1,6 @@
 defmodule PantryWeb.StockpileLive do
   use PantryWeb, :live_view
 
-  alias Pantry.House.Item
   alias Phoenix.LiveView.AsyncResult
 
   @impl true
@@ -43,7 +42,6 @@ defmodule PantryWeb.StockpileLive do
          household =
            household_id
            |> Pantry.Stockpile.Household.Server.get_household()
-           |> prepare_household_for_frontend()
 
          {:ok,
           %{
@@ -115,6 +113,16 @@ defmodule PantryWeb.StockpileLive do
             module={PantryWeb.StockpileLive.Items}
             id="items_list"
             items={household.items}
+            item_types={household.item_types}
+            household_id={household.id}
+          />
+        <% end %>
+        <%= if @live_action == :recipes do %>
+          <.live_component
+            module={PantryWeb.StockpileLive.Recipes}
+            id="recipes_list"
+            recipes={household.recipes}
+            item_types={household.item_types}
             household_id={household.id}
           />
         <% end %>
@@ -124,9 +132,7 @@ defmodule PantryWeb.StockpileLive do
   end
 
   @impl true
-  def handle_info({:update, new_household}, state) do
-    household = prepare_household_for_frontend(new_household)
-
+  def handle_info({:update, household}, state) do
     state =
       assign(state,
         household: AsyncResult.ok(household)
@@ -138,17 +144,5 @@ defmodule PantryWeb.StockpileLive do
   defp remove_yourself(users, email) do
     users
     |> Enum.reject(fn user -> user.email == email end)
-  end
-
-  defp prepare_household_for_frontend(household) do
-    items =
-      household.items
-      |> Enum.map(fn item ->
-        item
-        |> Map.put(:quantity_form, to_form(Item.update_quantity(item, item.quantity)))
-        |> Map.put(:unit_form, to_form(Item.update_unit(item, item.unit)))
-      end)
-
-    Map.put(household, :items, items)
   end
 end

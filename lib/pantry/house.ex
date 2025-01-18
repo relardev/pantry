@@ -9,6 +9,9 @@ defmodule Pantry.House do
   alias Pantry.House.Household
   alias Pantry.House.HouseholdUser
   alias Pantry.House.Item
+  alias Pantry.House.ItemType
+  alias Pantry.House.Recipe
+  alias Pantry.House.RecipeIngredient
 
   @doc """
   Returns the list of households.
@@ -40,9 +43,18 @@ defmodule Pantry.House do
   """
   def get_household_with_users!(id) do
     items_query = from(i in Item, order_by: i.expiration)
+    item_types_query = from(it in ItemType, order_by: it.name)
+
+    recipes_query = from(r in Recipe, order_by: r.inserted_at)
+    recipe_ingredients_query = from(ri in RecipeIngredient, order_by: ri.id)
 
     Household
-    |> preload([:users, items: ^items_query])
+    |> preload([
+      :users,
+      recipes: ^{recipes_query, [ingredients: recipe_ingredients_query]},
+      items: ^items_query,
+      item_types: ^item_types_query
+    ])
     |> Repo.get!(id)
   end
 
@@ -326,6 +338,12 @@ defmodule Pantry.House do
     |> Repo.insert()
   end
 
+  def create_item_type(attrs) do
+    %ItemType{}
+    |> ItemType.changeset(attrs)
+    |> Repo.insert()
+  end
+
   def delete_item(id) do
     Repo.delete(%Item{id: id})
   end
@@ -340,5 +358,48 @@ defmodule Pantry.House do
     %Item{id: id}
     |> Item.update_unit(unit)
     |> Repo.update()
+  end
+
+  def create_recipe(attrs) do
+    %Recipe{}
+    |> Recipe.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def update_recipe(recipe, attrs) do
+    recipe
+    |> Recipe.changeset(attrs)
+    |> update_ingredients(attrs)
+    |> Repo.update()
+  end
+
+  defp update_ingredients(changeset, attrs) do
+    current_ingredients = Ecto.Changeset.get_field(changeset, :ingredients) || []
+    new_ingredients = attrs[:ingredients] || []
+
+    updated_ingredients =
+      new_ingredients
+      |> Enum.map(&ensure_ingredient_struct/1)
+      |> Enum.concat(keep_removed_ingredients(current_ingredients, new_ingredients))
+
+    Ecto.Changeset.put_assoc(changeset, :ingredients, updated_ingredients)
+  end
+
+  defp ensure_ingredient_struct(%RecipeIngredient{} = ingredient), do: ingredient
+
+  defp ensure_ingredient_struct(ingredient_map) when is_map(ingredient_map) do
+    struct(RecipeIngredient, ingredient_map)
+  end
+
+  defp keep_removed_ingredients(current_ingredients, new_ingredients) do
+    new_ingredient_ids = Enum.map(new_ingredients, & &1.id)
+
+    Enum.filter(current_ingredients, fn ingredient ->
+      ingredient.id not in new_ingredient_ids
+    end)
+  end
+
+  def delete_recipe(id) do
+    Repo.delete(%Recipe{id: id})
   end
 end

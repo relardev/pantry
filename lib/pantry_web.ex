@@ -83,6 +83,7 @@ defmodule PantryWeb do
     quote do
       # HTML escaping functionality
       import Phoenix.HTML
+      import Phoenix.HTML.Form
       # Core UI components and translation
       import PantryWeb.CoreComponents
       import PantryWeb.Gettext

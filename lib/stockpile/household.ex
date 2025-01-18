@@ -5,8 +5,32 @@ end
 defmodule Pantry.Stockpile.Household.Server do
   use GenServer
 
+  def update_recipe(id, recipe_id, recipe_params) do
+    GenServer.call(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:update_recipe, {recipe_id, recipe_params}},
+      10_000
+    )
+  end
+
+  def add_recipe(id, recipe) do
+    GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_recipe, recipe}, 10_000)
+  end
+
+  def delete_recipe(id, recipe_id) do
+    GenServer.call(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:delete_recipe, recipe_id},
+      10_000
+    )
+  end
+
   def add_item(id, item) do
     GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:add_item, item}, 10_000)
+  end
+
+  def get_or_create_item_type(id, name) do
+    GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:get_or_create_item_type, name})
   end
 
   def update_item_quantity(id, item_id, quantity) do
@@ -104,6 +128,31 @@ defmodule Pantry.Stockpile.Household.Server do
     {:reply, household, household}
   end
 
+  def handle_call({:update_recipe, {recipe_id, recipe_params}}, _from, household) do
+    recipe = Enum.find(household.recipes, fn r -> r.id == recipe_id end)
+    {:ok, recipe} = Pantry.House.update_recipe(recipe, recipe_params)
+
+    recipes =
+      Enum.map(household.recipes, fn r ->
+        if r.id == recipe.id, do: recipe, else: r
+      end)
+
+    household = Map.put(household, :recipes, recipes)
+    broadcast_update(household)
+
+    {:reply, {:ok, recipe}, household}
+  end
+
+  def handle_call({:add_recipe, recipe}, _from, household) do
+    recipe = Map.put(recipe, "household_id", household.id)
+    {:ok, recipe} = Pantry.House.create_recipe(recipe)
+
+    household = Map.put(household, :recipes, [recipe | household.recipes])
+
+    broadcast_update(household)
+    {:reply, {:ok, recipe}, household}
+  end
+
   def handle_call({:add_item, item}, _from, household) do
     {:ok, item} = Pantry.House.create_item(item)
 
@@ -129,10 +178,34 @@ defmodule Pantry.Stockpile.Household.Server do
     {:reply, {:ok, item}, household}
   end
 
+  def handle_call({:get_or_create_item_type, name}, _from, household) do
+    item_type = Enum.find(household.item_types, fn it -> it.name == name end)
+
+    if item_type do
+      {:reply, item_type.id, household}
+    else
+      {:ok, item_type} = Pantry.House.create_item_type(%{name: name, household_id: household.id})
+      item_types = [item_type | household.item_types]
+      household = Map.put(household, :item_types, item_types)
+      broadcast_update(household)
+
+      {:reply, item_type.id, household}
+    end
+  end
+
   def handle_call({:delete_item, item_id}, _from, household) do
     {:ok, _} = Pantry.House.delete_item(item_id)
     items = Enum.reject(household.items, fn item -> item.id == item_id end)
     household = Map.put(household, :items, items)
+    broadcast_update(household)
+
+    {:reply, :ok, household}
+  end
+
+  def handle_call({:delete_recipe, recipe_id}, _from, household) do
+    {:ok, _} = Pantry.House.delete_recipe(recipe_id)
+    recipes = Enum.reject(household.recipes, fn recipe -> recipe.id == recipe_id end)
+    household = Map.put(household, :recipes, recipes)
     broadcast_update(household)
 
     {:reply, :ok, household}
