@@ -4,7 +4,7 @@ defmodule Pantry.Repo.Migrations.CreateItemTypes do
 
   def up do
     create table(:item_types, primary_key: false) do
-      add :id, :binary_id, primary_key: true, default: fragment("uuid_generate_v4()"), null: false
+      add :id, :binary_id, primary_key: true
       add :name, :string, null: false
       add :household_id, references(:households, on_delete: :nothing, type: :binary_id)
 
