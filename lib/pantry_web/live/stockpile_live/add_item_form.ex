@@ -3,26 +3,10 @@ defmodule PantryWeb.Stockpile.AddItemForm do
   alias Pantry.House.Item
 
   @impl true
-  def render(assigns) do
-    ~H"""
-    <div>
-      <.inline_form
-        for={@form}
-        id="add-item-form"
-        phx-target={@myself}
-        phx-change="validate"
-        phx-submit="save"
-      >
-        <.input field={@form[:name]} type="text" label="Name" id="first-input" phx-debounce="200" />
-        <.input field={@form[:quantity]} type="text" label="Quantity" phx-debounce="200" />
-        <.input field={@form[:unit]} type="select" label="Unit" options={Pantry.House.Unit.options()} />
-        <.input field={@form[:expiration]} type="date" label="Expiration" />
-        <:actions>
-          <.button phx-disable-with="Saving...">Add</.button>
-        </:actions>
-      </.inline_form>
-    </div>
-    """
+  def mount(socket) do
+    {:ok,
+     socket
+     |> assign(filtered_ingredients: [])}
   end
 
   @impl true
@@ -36,10 +20,54 @@ defmodule PantryWeb.Stockpile.AddItemForm do
   end
 
   @impl true
-  def handle_event("validate", %{"item" => item_params}, socket) do
+  def render(assigns) do
+    ~H"""
+    <div>
+      <.inline_form
+        for={@form}
+        id="add-item-form"
+        phx-target={@myself}
+        phx-change="change"
+        phx-submit="save"
+      >
+        <datalist id="ingredientOptions">
+          <%= for ingredient <- @filtered_ingredients do %>
+            <option value={ingredient}><%= ingredient %></option>
+          <% end %>
+        </datalist>
+        <.input
+          field={@form[:name]}
+          type="text"
+          list="ingredientOptions"
+          label="Name"
+          id="first-input"
+          phx-debounce="200"
+          autocapitalize="off"
+        />
+        <.input field={@form[:quantity]} type="text" label="Quantity" phx-debounce="200" />
+        <.input field={@form[:unit]} type="select" label="Unit" options={Pantry.House.Unit.options()} />
+        <.input field={@form[:expiration]} type="date" label="Expiration" />
+        <:actions>
+          <.button phx-disable-with="Saving...">Add</.button>
+        </:actions>
+      </.inline_form>
+    </div>
+    """
+  end
+
+  @impl true
+  def handle_event("change", %{"item" => item_params}, socket) do
     item_params = unpack_quantity(item_params)
     changeset = Item.changeset(socket.assigns.item, item_params)
-    {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+
+    value = Map.get(item_params, "name", "")
+
+    {:noreply,
+     socket
+     |> assign(form: to_form(changeset, action: :validate))
+     |> assign(
+       filtered_ingredients: PantryWeb.Stockpile.ItemType.filter(socket.assigns.item_types, value)
+     )}
   end
 
   def handle_event("save", %{"item" => item_params}, socket) do

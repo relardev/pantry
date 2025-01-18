@@ -126,18 +126,6 @@ defmodule PantryWeb.Stockpile.RecipeForm do
     """
   end
 
-  defp filter(item_types, search) do
-    item_types
-    |> Enum.filter(
-      &String.contains?(
-        String.downcase(&1.name),
-        String.downcase(search)
-      )
-    )
-    |> Enum.map(& &1.name)
-    |> Enum.take(7)
-  end
-
   @impl true
   def handle_event(
         "change",
@@ -156,7 +144,10 @@ defmodule PantryWeb.Stockpile.RecipeForm do
 
     {:noreply,
      socket
-     |> assign(filtered_ingredients: filter(socket.assigns.item_types, ingredient_name))}
+     |> assign(
+       filtered_ingredients:
+         PantryWeb.Stockpile.ItemType.filter(socket.assigns.item_types, ingredient_name)
+     )}
   end
 
   def handle_event("change", %{"recipe" => %{"ingredients" => ["new"]}}, socket) do

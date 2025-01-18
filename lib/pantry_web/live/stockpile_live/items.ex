@@ -37,6 +37,7 @@ defmodule PantryWeb.StockpileLive.Items do
         module={PantryWeb.Stockpile.AddItemForm}
         id="add-item-form"
         household_id={@household_id}
+        item_types={@item_types}
         title="Add Item"
         item={%Item{}}
         }
