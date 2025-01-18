@@ -47,7 +47,12 @@ defmodule PantryWeb.Stockpile.AddRecipeForm do
               placeholder="name"
             />
             <.input type="text" field={ingredient_form[:quantity]} placeholder="quantity" />
-            <.input type="text" field={ingredient_form[:unit]} placeholder="unit" />
+            <.input
+              field={ingredient_form[:unit]}
+              type="select"
+              label="Unit"
+              options={Pantry.House.Unit.options()}
+            />
             <button
               type="button"
               name="recipe[ingredient_drop][]"
