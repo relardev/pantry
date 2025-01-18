@@ -67,6 +67,7 @@ defmodule PantryWeb.Stockpile.RecipeForm do
               field={ingredient_form[:name]}
               list="ingredientOptions"
               placeholder="name"
+              autocapitalize="off"
             />
             <.input type="text" field={ingredient_form[:quantity]} placeholder="quantity" />
             <.input
