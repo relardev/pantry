@@ -3,7 +3,7 @@ defmodule Pantry.Repo.Migrations.CreateItemTypes do
 
   def up do
     create table(:item_types, primary_key: false) do
-      add :id, :binary_id, primary_key: true
+      add :id, :binary_id, primary_key: true, default: fragment("uuid_generate_v4()"), null: false
       add :name, :string, null: false
       add :household_id, references(:households, on_delete: :nothing, type: :binary_id)
 
@@ -18,7 +18,7 @@ defmodule Pantry.Repo.Migrations.CreateItemTypes do
     end
 
     execute(
-      "INSERT INTO item_types (id, name, household_id, inserted_at, updated_at) SELECT DISTINCT gen_random_uuid(), name, household_id, NOW(), NOW() FROM items"
+      "INSERT INTO item_types (name, household_id, inserted_at, updated_at) SELECT DISTINCT name, household_id, NOW(), NOW() FROM items"
     )
 
     execute(
