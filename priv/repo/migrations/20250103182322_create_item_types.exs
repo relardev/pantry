@@ -29,10 +29,10 @@ defmodule Pantry.Repo.Migrations.CreateItemTypes do
     Enum.each(distinct_items, fn {name, household_id} ->
       uuid = Ecto.UUID.generate()
 
-      execute("""
-        INSERT INTO item_types (id, name, household_id, inserted_at, updated_at) 
-        VALUES ('#{uuid}', '#{name}', '#{household_id}', NOW(), NOW()) 
-      """)
+      Pantry.Repo.query!(
+        "INSERT INTO item_types (id, name, household_id, inserted_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())",
+        [uuid, name, household_id]
+      )
     end)
 
     execute(
