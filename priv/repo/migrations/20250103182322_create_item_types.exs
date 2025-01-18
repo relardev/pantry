@@ -18,7 +18,7 @@ defmodule Pantry.Repo.Migrations.CreateItemTypes do
     end
 
     execute(
-      "INSERT INTO item_types (name, household_id, inserted_at, updated_at) SELECT DISTINCT name, household_id, NOW(), NOW() FROM items"
+      "INSERT INTO item_types (id, name, household_id, inserted_at, updated_at) SELECT DISTINCT gen_random_uuid(), name, household_id, NOW(), NOW() FROM items"
     )
 
     execute(
