@@ -18,6 +18,8 @@ defmodule Pantry.Repo.Migrations.CreateItemTypes do
       add :item_type_id, references(:item_types, on_delete: :delete_all, type: :binary_id)
     end
 
+    flush()
+
     distinct_items =
       Pantry.Repo.all(
         from(i in "items",
@@ -27,7 +29,7 @@ defmodule Pantry.Repo.Migrations.CreateItemTypes do
       )
 
     Enum.each(distinct_items, fn {name, household_id} ->
-      uuid = Ecto.UUID.generate()
+      uuid = Ecto.UUID.generate() |> Ecto.UUID.dump() |> elem(1)
 
       Pantry.Repo.query!(
         "INSERT INTO item_types (id, name, household_id, inserted_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())",
