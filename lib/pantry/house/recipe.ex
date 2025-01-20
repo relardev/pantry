@@ -24,4 +24,14 @@ defmodule Pantry.House.Recipe do
     )
     |> cast_assoc(:ingredients, with: &Pantry.House.RecipeIngredient.changeset/2, required: true)
   end
+
+  def validate_changeset(recipe, attrs) do
+    recipe
+    |> cast(attrs, [:name, :instructions])
+    |> validate_required([:name, :instructions])
+    |> cast_assoc(:ingredients,
+      with: &Pantry.House.RecipeIngredientFormValidation.changeset/2,
+      required: true
+    )
+  end
 end

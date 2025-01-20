@@ -87,7 +87,7 @@ defmodule PantryWeb.StockpileLive.Items do
               id={"item_unit-" <> item.id}
               value={item.unit}
               field={item.unit_form[:unit]}
-              options={Item.units()}
+              options={Pantry.House.Unit.units()}
             />
           </.small_form>
         </:col>

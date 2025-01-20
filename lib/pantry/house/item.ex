@@ -17,7 +17,7 @@ defmodule Pantry.House.Item do
 
   @doc false
   def changeset(item, attrs) do
-    attrs = convert_unit_to_atom(attrs)
+    attrs = Pantry.House.Unit.convert_unit_attr_to_atom(attrs)
 
     item
     |> cast(attrs, [:quantity, :expiration, :unit, :household_id, :item_type_id])
@@ -28,12 +28,6 @@ defmodule Pantry.House.Item do
       name: "items_name_household_id_index"
     )
   end
-
-  defp convert_unit_to_atom(%{"unit" => unit} = attrs) when is_binary(unit) do
-    Map.update!(attrs, "unit", &String.to_existing_atom/1)
-  end
-
-  defp convert_unit_to_atom(attrs), do: attrs
 
   def update_quantity(item, quantity) do
     item
@@ -47,9 +41,5 @@ defmodule Pantry.House.Item do
     |> cast(%{unit: unit}, [:unit])
     |> validate_inclusion(:unit, Pantry.House.Unit.units())
     |> validate_required([:unit])
-  end
-
-  def units() do
-    Pantry.House.Unit.units()
   end
 end

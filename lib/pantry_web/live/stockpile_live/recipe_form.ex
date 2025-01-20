@@ -150,6 +150,25 @@ defmodule PantryWeb.Stockpile.RecipeForm do
      )}
   end
 
+  def handle_event(
+        "change",
+        %{
+          "_target" => ["recipe", "ingredients", idx, "quantity"],
+          "recipe" => %{
+            "ingredients" => ingredients
+          }
+        },
+        socket
+      ) do
+    ingredients = unpack_quantity_for(ingredients, idx)
+
+    changeset = Recipe.validate_changeset(socket.assigns.recipe, %{"ingredients" => ingredients})
+
+    {:noreply,
+     socket
+     |> assign(form: to_form(changeset, action: :validate))}
+  end
+
   def handle_event("change", %{"recipe" => %{"ingredients" => ["new"]}}, socket) do
     current_form = socket.assigns.form
     current_ingredients = Ecto.Changeset.get_assoc(current_form.source, :ingredients)
@@ -193,7 +212,7 @@ defmodule PantryWeb.Stockpile.RecipeForm do
   end
 
   def handle_event("change", %{"recipe" => recipe_params}, socket) do
-    changeset = Recipe.changeset(socket.assigns.recipe, recipe_params)
+    changeset = Recipe.validate_changeset(socket.assigns.recipe, recipe_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
@@ -201,7 +220,8 @@ defmodule PantryWeb.Stockpile.RecipeForm do
     household_id = socket.assigns.household_id
 
     ingredients =
-      Map.get(recipe_params, "ingredients")
+      recipe_params
+      |> Map.get("ingredients")
       |> Enum.map(fn {_id, ingredient} ->
         item_type_id =
           Pantry.Stockpile.Household.Server.get_or_create_item_type(
@@ -209,8 +229,10 @@ defmodule PantryWeb.Stockpile.RecipeForm do
             ingredient["name"]
           )
 
-        Map.put(ingredient, "item_type_id", item_type_id)
+        ingredient
+        |> Map.put("item_type_id", item_type_id)
       end)
+      |> unpack_quantity_all()
 
     recipe_params =
       recipe_params
@@ -261,6 +283,65 @@ defmodule PantryWeb.Stockpile.RecipeForm do
 
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+    end
+  end
+
+  defp unpack_quantity_all(ingredients) do
+    Enum.map(ingredients, fn ingredient ->
+      {quantity, unit} = unpack_quantity(ingredient)
+
+      ingredient
+      |> Map.put("quantity", quantity)
+      |> Map.put("unit", unit)
+    end)
+  end
+
+  defp unpack_quantity_for(ingredients, idx) do
+    ingredient = ingredients[idx]
+    {quantity, unit} = unpack_quantity(ingredient)
+
+    Map.put(
+      ingredients,
+      idx,
+      ingredients[idx]
+      |> Map.put("unit", unit)
+      |> Map.put("quantity", quantity)
+    )
+  end
+
+  defp unpack_quantity(ingredient) do
+    quantity = Map.get(ingredient, "quantity")
+
+    {quantity, unit} =
+      case parse_quantity(quantity) do
+        {:ok, quantity, unit} ->
+          {quantity, unit}
+
+        {:error, _} ->
+          {ingredient["quantity"], ingredient["unit"]}
+      end
+
+    unit =
+      if value_exists_in_second?(Pantry.House.Unit.options(), unit) do
+        unit
+      else
+        ""
+      end
+
+    {quantity, unit}
+  end
+
+  defp value_exists_in_second?(list, value) do
+    Enum.any?(list, fn {_, second_element} -> second_element == value end)
+  end
+
+  defp parse_quantity(input) do
+    case Regex.run(~r/^([\d.]+)\s*([a-zA-Z]+)$/, input) do
+      [_, quantity, unit] ->
+        {:ok, String.trim(quantity), String.downcase(unit)}
+
+      _ ->
+        {:error, :invalid_format}
     end
   end
 end

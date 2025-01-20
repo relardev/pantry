@@ -16,6 +16,8 @@ defmodule Pantry.House.RecipeIngredient do
 
   @doc false
   def changeset(recipe_ingredient, attrs) do
+    attrs = Pantry.House.Unit.convert_unit_attr_to_atom(attrs)
+
     recipe_ingredient
     |> cast(attrs, [:quantity, :unit, :item_type_id, :recipe_id])
     |> validate_required([:quantity, :unit, :item_type_id])
@@ -23,5 +25,27 @@ defmodule Pantry.House.RecipeIngredient do
     |> unique_constraint([:item_type_id, :recipe_id],
       name: "recipe_ingredients_item_type_id_recipe_id_index"
     )
+  end
+end
+
+defmodule Pantry.House.RecipeIngredientFormValidation do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  embedded_schema do
+    field :unit, Ecto.Enum, values: Pantry.House.Unit.units()
+    field :quantity, :binary
+    field :item_type, :binary
+    field :recipe, :binary
+  end
+
+  @doc false
+  def changeset(recipe_ingredient, attrs) do
+    attrs = Pantry.House.Unit.convert_unit_attr_to_atom(attrs)
+
+    recipe_ingredient
+    |> cast(attrs, [:unit, :item_type_id, :recipe_id])
+    |> validate_required([:unit, :item_type_id])
+    |> validate_inclusion(:unit, Pantry.House.Unit.units())
   end
 end
