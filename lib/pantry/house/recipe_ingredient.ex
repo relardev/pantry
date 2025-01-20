@@ -26,21 +26,8 @@ defmodule Pantry.House.RecipeIngredient do
       name: "recipe_ingredients_item_type_id_recipe_id_index"
     )
   end
-end
 
-defmodule Pantry.House.RecipeIngredientFormValidation do
-  use Ecto.Schema
-  import Ecto.Changeset
-
-  embedded_schema do
-    field :unit, Ecto.Enum, values: Pantry.House.Unit.units()
-    field :quantity, :binary
-    field :item_type, :binary
-    field :recipe, :binary
-  end
-
-  @doc false
-  def changeset(recipe_ingredient, attrs) do
+  def validate_changeset(recipe_ingredient, attrs) do
     attrs = Pantry.House.Unit.convert_unit_attr_to_atom(attrs)
 
     recipe_ingredient

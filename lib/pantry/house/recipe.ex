@@ -30,7 +30,7 @@ defmodule Pantry.House.Recipe do
     |> cast(attrs, [:name, :instructions])
     |> validate_required([:name, :instructions])
     |> cast_assoc(:ingredients,
-      with: &Pantry.House.RecipeIngredientFormValidation.changeset/2,
+      with: &Pantry.House.RecipeIngredient.validate_changeset/2,
       required: true
     )
   end
