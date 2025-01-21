@@ -45,7 +45,12 @@ defmodule PantryWeb.Stockpile.AddItemForm do
           autocapitalize="off"
         />
         <.input field={@form[:quantity]} type="text" label="Quantity" phx-debounce="200" />
-        <.input field={@form[:unit]} type="select" label="Unit" options={Pantry.House.Unit.options()} />
+        <.input
+          field={@form[:unit]}
+          type="select"
+          label="Unit"
+          options={Pantry.House.Unit.buy_units()}
+        />
         <.input field={@form[:expiration]} type="date" label="Expiration" />
         <:actions>
           <.button phx-disable-with="Saving...">Add</.button>

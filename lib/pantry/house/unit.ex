@@ -12,6 +12,11 @@ defmodule Pantry.House.Unit do
     {"spoon", "spoon"}
   ]
 
+  @buy_units ~w(kg g l ml pack)a
+  def buy_units() do
+    @buy_units
+  end
+
   def units() do
     @unit_enum
   end

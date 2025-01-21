@@ -25,3 +25,6 @@ config :pantry, Pantry.Mailer,
   domain: System.get_env("MAILGUN_DOMAIN")
 
 config :swoosh, :api_client, Swoosh.ApiClient.Req
+
+config :phoenix_live_view,
+  debug_heex_annotations: false
