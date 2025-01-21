@@ -42,4 +42,10 @@ defmodule Pantry.House.Item do
     |> validate_inclusion(:unit, Pantry.House.Unit.units())
     |> validate_required([:unit])
   end
+
+  def update_expiration(item, expiration) do
+    item
+    |> cast(%{expiration: expiration}, [:expiration])
+    |> validate_required([:expiration])
+  end
 end

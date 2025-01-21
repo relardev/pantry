@@ -74,7 +74,7 @@ defmodule PantryWeb.StockpileLive.Items do
           </.small_form>
         </:col>
         <:col :let={item} label="Unit">
-          <.small_form
+          <.form
             for={item.unit_form}
             id={"unit-form-" <> item.id}
             phx-change={"update_unit-" <> item.id}
@@ -89,9 +89,26 @@ defmodule PantryWeb.StockpileLive.Items do
               field={item.unit_form[:unit]}
               options={Pantry.House.Unit.units()}
             />
-          </.small_form>
+          </.form>
         </:col>
-        <:col :let={item} label="Expiration"><%= item.expiration %></:col>
+        <:col :let={item} label="Expiration">
+          <.form
+            for={item.expiration_form}
+            id={"expiration-form-" <> item.id}
+            phx-change={"update_expiration-" <> item.id}
+            phx-submit={"update_expiration-" <> item.id}
+            phx-target={@myself}
+          >
+            <.input
+              type="date"
+              name="expiration"
+              id={"item_expiration-" <> item.id}
+              value={item.expiration}
+              field={item.expiration_form[:expiration]}
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            />
+          </.form>
+        </:col>
         <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
         <:action :let={item}>
           <.link
@@ -195,6 +212,16 @@ defmodule PantryWeb.StockpileLive.Items do
     {:noreply, socket}
   end
 
+  def handle_event("update_expiration-" <> item_id, %{"expiration" => value}, socket) do
+    Pantry.Stockpile.Household.Server.update_item_expiration(
+      socket.assigns.household_id,
+      item_id,
+      value
+    )
+
+    {:noreply, socket}
+  end
+
   defp search(socket, value) do
     filtered = filter_items(socket.assigns.original_items, value)
 
@@ -209,6 +236,7 @@ defmodule PantryWeb.StockpileLive.Items do
       item
       |> Map.put(:quantity_form, to_form(Item.update_quantity(item, item.quantity)))
       |> Map.put(:unit_form, to_form(Item.update_unit(item, item.unit)))
+      |> Map.put(:expiration_form, to_form(Item.update_expiration(item, item.expiration)))
     end)
   end
 

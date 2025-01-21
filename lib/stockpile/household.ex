@@ -44,6 +44,13 @@ defmodule Pantry.Stockpile.Household.Server do
     GenServer.cast(Pantry.Stockpile.HouseholdRegistry.via(id), {:update_item_unit, item_id, unit})
   end
 
+  def update_item_expiration(id, item_id, expiration) do
+    GenServer.cast(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:update_item_expiration, item_id, expiration}
+    )
+  end
+
   def delete_item(id, item_id) do
     GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:delete_item, item_id}, 10_000)
   end
@@ -123,6 +130,22 @@ defmodule Pantry.Stockpile.Household.Server do
     {:noreply, household}
   end
 
+  def handle_cast({:update_item_expiration, item_id, expiration}, household) do
+    {:ok, item} = Pantry.House.update_item_expiration(item_id, expiration)
+
+    items =
+      Enum.map(household.items, fn i ->
+        if i.id == item.id, do: %{i | expiration: item.expiration}, else: i
+      end)
+      |> sort_items()
+
+    household = Map.put(household, :items, items)
+
+    broadcast_update(household)
+
+    {:noreply, household}
+  end
+
   @impl true
   def handle_call(:get_household, _from, household) do
     {:reply, household, household}
@@ -158,19 +181,7 @@ defmodule Pantry.Stockpile.Household.Server do
 
     new_items =
       [item | household.items]
-      |> Enum.sort_by(
-        & &1.expiration,
-        fn
-          nil, _ ->
-            false
-
-          _, nil ->
-            true
-
-          exp1, exp2 ->
-            Date.compare(exp1, exp2) == :lt
-        end
-      )
+      |> sort_items()
 
     household = Map.put(household, :items, new_items)
 
@@ -289,4 +300,21 @@ defmodule Pantry.Stockpile.Household.Server do
 
   def broadcast_update(household),
     do: Phoenix.PubSub.broadcast(Pantry.PubSub, topic(household.id), {:update, household})
+
+  def sort_items(items) do
+    items
+    |> Enum.sort_by(
+      & &1.expiration,
+      fn
+        nil, _ ->
+          false
+
+        _, nil ->
+          true
+
+        exp1, exp2 ->
+          Date.compare(exp1, exp2) == :lt
+      end
+    )
+  end
 end

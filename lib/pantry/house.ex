@@ -360,6 +360,12 @@ defmodule Pantry.House do
     |> Repo.update()
   end
 
+  def update_item_expiration(id, expiration) do
+    %Item{id: id}
+    |> Item.update_expiration(expiration)
+    |> Repo.update()
+  end
+
   def create_recipe(attrs) do
     %Recipe{}
     |> Recipe.changeset(attrs)
