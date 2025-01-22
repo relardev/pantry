@@ -92,6 +92,7 @@ defmodule PantryWeb.Router do
       on_mount: [{PantryWeb.UserAuth, :ensure_authenticated}] do
       live "/app", StockpileLive, :overview
       live "/app/items", StockpileLive, :items
+      live "/app/item_types", StockpileLive, :item_types
       live "/app/recipes", StockpileLive, :recipes
       live "/app/recipes/:action", StockpileLive, :recipes
       live "/app/shopping-list", StockpileLive, :shopping_list

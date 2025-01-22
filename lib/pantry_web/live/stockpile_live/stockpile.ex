@@ -68,6 +68,12 @@ defmodule PantryWeb.StockpileLive do
     |> assign(:nav, navigation(:items))
   end
 
+  defp apply_action(socket, :item_types, _params) do
+    socket
+    |> assign(:page_title, "Item Types")
+    |> assign(:nav, navigation(:item_types))
+  end
+
   defp apply_action(socket, :recipes, _params) do
     socket
     |> assign(:page_title, "Recipes")
@@ -84,6 +90,7 @@ defmodule PantryWeb.StockpileLive do
     [
       %{url: "/app", label: "Overview", active: current == :overview},
       %{url: "/app/items", label: "Items", active: current == :items},
+      %{url: "/app/item_types", label: "Item Types", active: current == :item_types},
       %{url: "/app/recipes", label: "Recipes", active: current == :recipes},
       %{url: "/app/shopping-list", label: "Shopping List", active: current == :shopping_list}
     ]
@@ -112,18 +119,28 @@ defmodule PantryWeb.StockpileLive do
           <.live_component
             module={PantryWeb.StockpileLive.Items}
             id="items_list"
+            household_id={household.id}
             items={household.items}
             item_types={household.item_types}
+          />
+        <% end %>
+        <%= if @live_action == :item_types do %>
+          <.live_component
+            module={PantryWeb.StockpileLive.ItemTypes}
+            id="item_types_list"
             household_id={household.id}
+            items={household.items}
+            item_types={household.item_types}
+            recipes={household.recipes}
           />
         <% end %>
         <%= if @live_action == :recipes do %>
           <.live_component
             module={PantryWeb.StockpileLive.Recipes}
             id="recipes_list"
+            household_id={household.id}
             recipes={household.recipes}
             item_types={household.item_types}
-            household_id={household.id}
           />
         <% end %>
       </div>

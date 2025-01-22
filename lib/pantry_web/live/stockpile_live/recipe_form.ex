@@ -146,7 +146,7 @@ defmodule PantryWeb.Stockpile.RecipeForm do
      socket
      |> assign(
        filtered_ingredients:
-         PantryWeb.Stockpile.ItemType.filter(socket.assigns.item_types, ingredient_name)
+         PantryWeb.Stockpile.ItemTypeHint.filter(socket.assigns.item_types, ingredient_name)
      )}
   end
 

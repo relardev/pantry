@@ -344,8 +344,18 @@ defmodule Pantry.House do
     |> Repo.insert()
   end
 
+  def update_item_type_always_available(item_type_id, always_available) do
+    %ItemType{id: item_type_id}
+    |> ItemType.change_available(always_available)
+    |> Repo.update()
+  end
+
   def delete_item(id) do
     Repo.delete(%Item{id: id})
+  end
+
+  def delete_item_type(id) do
+    Repo.delete(%ItemType{id: id})
   end
 
   def update_item_quantity(id, quantity) do

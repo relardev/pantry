@@ -55,6 +55,21 @@ defmodule Pantry.Stockpile.Household.Server do
     GenServer.call(Pantry.Stockpile.HouseholdRegistry.via(id), {:delete_item, item_id}, 10_000)
   end
 
+  def delete_item_type(id, item_id) do
+    GenServer.call(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:delete_item_type, item_id},
+      10_000
+    )
+  end
+
+  def update_item_type_always_available(id, item_type_id, always_available) do
+    GenServer.cast(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:update_item_type_always_available, item_type_id, always_available}
+    )
+  end
+
   def supervisor_spec() do
     {DynamicSupervisor, name: Pantry.Stockpile.HouseholdSupervisor, strategy: :one_for_one}
   end
@@ -146,6 +161,23 @@ defmodule Pantry.Stockpile.Household.Server do
     {:noreply, household}
   end
 
+  def handle_cast({:update_item_type_always_available, item_type_id, always_available}, household) do
+    {:ok, _} =
+      Pantry.House.update_item_type_always_available(item_type_id, always_available)
+
+    item_types =
+      Enum.map(household.item_types, fn it ->
+        if it.id == item_type_id,
+          do: Map.put(it, :always_available, always_available),
+          else: it
+      end)
+
+    household = Map.put(household, :item_types, item_types)
+    broadcast_update(household)
+
+    {:noreply, household}
+  end
+
   @impl true
   def handle_call(:get_household, _from, household) do
     {:reply, household, household}
@@ -208,6 +240,18 @@ defmodule Pantry.Stockpile.Household.Server do
     {:ok, _} = Pantry.House.delete_item(item_id)
     items = Enum.reject(household.items, fn item -> item.id == item_id end)
     household = Map.put(household, :items, items)
+    broadcast_update(household)
+
+    {:reply, :ok, household}
+  end
+
+  def handle_call({:delete_item_type, item_type_id}, _from, household) do
+    {:ok, _} = Pantry.House.delete_item_type(item_type_id)
+
+    item_types =
+      Enum.reject(household.item_types, fn item_type -> item_type.id == item_type_id end)
+
+    household = Map.put(household, :item_types, item_types)
     broadcast_update(household)
 
     {:reply, :ok, household}

@@ -7,6 +7,7 @@ defmodule Pantry.House.ItemType do
   schema "item_types" do
     field :name, :string
     field :household_id, :binary_id
+    field :always_available, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -17,5 +18,11 @@ defmodule Pantry.House.ItemType do
     |> cast(attrs, [:name, :household_id])
     |> validate_required([:name, :household_id])
     |> unique_constraint([:name, :household_id], name: "item_types_name_household_id_index")
+  end
+
+  def change_available(item_type, always_available) do
+    item_type
+    |> cast(%{always_available: always_available}, [:always_available])
+    |> validate_required([:always_available])
   end
 end

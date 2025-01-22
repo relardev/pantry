@@ -71,7 +71,8 @@ defmodule PantryWeb.Stockpile.AddItemForm do
      socket
      |> assign(form: to_form(changeset, action: :validate))
      |> assign(
-       filtered_ingredients: PantryWeb.Stockpile.ItemType.filter(socket.assigns.item_types, value)
+       filtered_ingredients:
+         PantryWeb.Stockpile.ItemTypeHint.filter(socket.assigns.item_types, value)
      )}
   end
 
