@@ -9,7 +9,7 @@ defmodule PantryWeb.StockpileLive.Items do
     {:ok,
      socket
      |> assign(search_form: search_form(""))
-     |> assign(compact: false)}
+     |> assign(compact: true)}
   end
 
   @impl true
@@ -77,7 +77,7 @@ defmodule PantryWeb.StockpileLive.Items do
         </div>
       </div>
       <%= if @compact do %>
-        <.table id="items" rows={@items} row_id={&("item-" <> &1.id)}>
+        <.compact_table id="items" rows={@items} row_id={&("item-" <> &1.id)}>
           <:col :let={item} label="Name"><%= item.name %></:col>
           <:col :let={item} label="Quant">
             <%= item.quantity %>
@@ -86,7 +86,7 @@ defmodule PantryWeb.StockpileLive.Items do
             <%= item.unit %>
           </:col>
           <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
-        </.table>
+        </.compact_table>
       <% else %>
         <.table id="items" rows={@items} row_id={&("item-" <> &1.id)}>
           <:col :let={item} label="Name"><%= item.name %></:col>
