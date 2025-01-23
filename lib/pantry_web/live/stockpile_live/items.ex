@@ -9,7 +9,7 @@ defmodule PantryWeb.StockpileLive.Items do
     {:ok,
      socket
      |> assign(search_form: search_form(""))
-     |> assign(compact: true)}
+     |> assign(compact: false)}
   end
 
   @impl true
