@@ -70,6 +70,13 @@ defmodule Pantry.Stockpile.Household.Server do
     )
   end
 
+  def update_item_type_name(id, item_type_id, name) do
+    GenServer.cast(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:update_item_type_name, item_type_id, name}
+    )
+  end
+
   def supervisor_spec() do
     {DynamicSupervisor, name: Pantry.Stockpile.HouseholdSupervisor, strategy: :one_for_one}
   end
@@ -170,6 +177,20 @@ defmodule Pantry.Stockpile.Household.Server do
         if it.id == item_type_id,
           do: Map.put(it, :always_available, always_available),
           else: it
+      end)
+
+    household = Map.put(household, :item_types, item_types)
+    broadcast_update(household)
+
+    {:noreply, household}
+  end
+
+  def handle_cast({:update_item_type_name, item_type_id, name}, household) do
+    {:ok, _} = Pantry.House.update_item_type_name(item_type_id, name)
+
+    item_types =
+      Enum.map(household.item_types, fn it ->
+        if it.id == item_type_id, do: Map.put(it, :name, name), else: it
       end)
 
     household = Map.put(household, :item_types, item_types)

@@ -350,6 +350,12 @@ defmodule Pantry.House do
     |> Repo.update()
   end
 
+  def update_item_type_name(item_type_id, name) do
+    %ItemType{id: item_type_id}
+    |> ItemType.change_name(name)
+    |> Repo.update()
+  end
+
   def delete_item(id) do
     Repo.delete(%Item{id: id})
   end

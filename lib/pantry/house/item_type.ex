@@ -25,4 +25,10 @@ defmodule Pantry.House.ItemType do
     |> cast(%{always_available: always_available}, [:always_available])
     |> validate_required([:always_available])
   end
+
+  def change_name(item_type, name) do
+    item_type
+    |> cast(%{name: name}, [:name])
+    |> validate_required([:name])
+  end
 end
