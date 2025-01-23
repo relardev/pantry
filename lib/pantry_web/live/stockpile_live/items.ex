@@ -8,7 +8,8 @@ defmodule PantryWeb.StockpileLive.Items do
   def mount(socket) do
     {:ok,
      socket
-     |> assign(search_form: search_form(""))}
+     |> assign(search_form: search_form(""))
+     |> assign(compact: false)}
   end
 
   @impl true
@@ -43,89 +44,124 @@ defmodule PantryWeb.StockpileLive.Items do
         }
       />
 
-      <.inline_form
-        for={@search_form}
-        id="search-form"
-        phx-change="search"
-        phx-submit="save"
-        phx-target={@myself}
-      >
-        <.input field={@search_form[:search]} type="text" phx-debounce="200" placeholder="Search..." />
-      </.inline_form>
-
-      <.table id="items" rows={@items} row_id={&("item-" <> &1.id)}>
-        <:col :let={item} label="Name"><%= item.name %></:col>
-        <:col :let={item} label="Quant">
-          <.small_form
-            for={item.quantity_form}
-            id={"quantity-form-" <> item.id}
-            phx-change={"update_quantity-" <> item.id}
-            phx-submit={"update_quantity-" <> item.id}
+      <div class="flex justify-between">
+        <div class="flex items-center">
+          <.form
+            for={@search_form}
+            id="search-form"
+            phx-change="search"
+            phx-submit="save"
             phx-target={@myself}
           >
             <.input
-              type="small_number"
-              name="quantity"
-              id={"item_quantity-" <> item.id}
-              value={FormatNumber.format(item.quantity)}
-              field={item.quantity_form[:quantity]}
+              field={@search_form[:search]}
+              type="text"
               phx-debounce="200"
-            />
-          </.small_form>
-        </:col>
-        <:col :let={item} label="Unit">
-          <.form
-            for={item.unit_form}
-            id={"unit-form-" <> item.id}
-            phx-change={"update_unit-" <> item.id}
-            phx-submit={"update_unit-" <> item.id}
-            phx-target={@myself}
-          >
-            <.input
-              type="select"
-              name="unit"
-              id={"item_unit-" <> item.id}
-              value={item.unit}
-              field={item.unit_form[:unit]}
-              options={Pantry.House.Unit.buy_units()}
+              placeholder="Search..."
             />
           </.form>
-        </:col>
-        <:col :let={item} label="Expiration">
-          <.form
-            for={item.expiration_form}
-            id={"expiration-form-" <> item.id}
-            phx-change={"update_expiration-" <> item.id}
-            phx-submit={"update_expiration-" <> item.id}
-            phx-target={@myself}
-          >
+        </div>
+
+        <div class="flex space-x-1">
+          <div class="flex items-center">
             <.input
-              type="date"
-              name="expiration"
-              id={"item_expiration-" <> item.id}
-              value={item.expiration}
-              field={item.expiration_form[:expiration]}
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              type="checkbox"
+              name="compact"
+              id="compact"
+              value={@compact}
+              phx-click="toggle-compact"
+              phx-target={@myself}
             />
-          </.form>
-        </:col>
-        <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
-        <:action :let={item}>
-          <.link
-            phx-disable-with="Deleting..."
-            phx-target={@myself}
-            phx-click={
-              JS.push("delete", value: %{id: item.id})
-              |> JS.transition({"ease-in-out duration-300", "opacity-100", "opacity-50"},
-                time: 300,
-                to: "#item-#{item.id}"
-              )
-            }
-          >
-            Delete
-          </.link>
-        </:action>
-      </.table>
+          </div>
+          <div class="flex items-center">Compact View</div>
+        </div>
+      </div>
+      <%= if @compact do %>
+        <.table id="items" rows={@items} row_id={&("item-" <> &1.id)}>
+          <:col :let={item} label="Name"><%= item.name %></:col>
+          <:col :let={item} label="Quant">
+            <%= item.quantity %>
+          </:col>
+          <:col :let={item} label="Unit">
+            <%= item.unit %>
+          </:col>
+          <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
+        </.table>
+      <% else %>
+        <.table id="items" rows={@items} row_id={&("item-" <> &1.id)}>
+          <:col :let={item} label="Name"><%= item.name %></:col>
+          <:col :let={item} label="Quant">
+            <.small_form
+              for={item.quantity_form}
+              id={"quantity-form-" <> item.id}
+              phx-change={"update_quantity-" <> item.id}
+              phx-submit={"update_quantity-" <> item.id}
+              phx-target={@myself}
+            >
+              <.input
+                type="small_number"
+                name="quantity"
+                id={"item_quantity-" <> item.id}
+                value={FormatNumber.format(item.quantity)}
+                field={item.quantity_form[:quantity]}
+                phx-debounce="200"
+              />
+            </.small_form>
+          </:col>
+          <:col :let={item} label="Unit">
+            <.form
+              for={item.unit_form}
+              id={"unit-form-" <> item.id}
+              phx-change={"update_unit-" <> item.id}
+              phx-submit={"update_unit-" <> item.id}
+              phx-target={@myself}
+            >
+              <.input
+                type="select"
+                name="unit"
+                id={"item_unit-" <> item.id}
+                value={item.unit}
+                field={item.unit_form[:unit]}
+                options={Pantry.House.Unit.buy_units()}
+              />
+            </.form>
+          </:col>
+          <:col :let={item} label="Expiration">
+            <.form
+              for={item.expiration_form}
+              id={"expiration-form-" <> item.id}
+              phx-change={"update_expiration-" <> item.id}
+              phx-submit={"update_expiration-" <> item.id}
+              phx-target={@myself}
+            >
+              <.input
+                type="date"
+                name="expiration"
+                id={"item_expiration-" <> item.id}
+                value={item.expiration}
+                field={item.expiration_form[:expiration]}
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              />
+            </.form>
+          </:col>
+          <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
+          <:action :let={item}>
+            <.link
+              phx-disable-with="Deleting..."
+              phx-target={@myself}
+              phx-click={
+                JS.push("delete", value: %{id: item.id})
+                |> JS.transition({"ease-in-out duration-300", "opacity-100", "opacity-50"},
+                  time: 300,
+                  to: "#item-#{item.id}"
+                )
+              }
+            >
+              Delete
+            </.link>
+          </:action>
+        </.table>
+      <% end %>
     </div>
     """
   end
@@ -220,6 +256,10 @@ defmodule PantryWeb.StockpileLive.Items do
     )
 
     {:noreply, socket}
+  end
+
+  def handle_event("toggle-compact", %{}, socket) do
+    {:noreply, assign(socket, compact: !socket.assigns.compact)}
   end
 
   defp search(socket, value) do
