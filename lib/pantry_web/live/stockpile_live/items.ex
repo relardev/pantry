@@ -77,20 +77,36 @@ defmodule PantryWeb.StockpileLive.Items do
         </div>
       </div>
       <%= if @compact do %>
-        <.compact_table id="items" rows={@items} row_id={&("item-" <> &1.id)}>
-          <:col :let={item} label="Name"><%= item.name %></:col>
-          <:col :let={item} label="Quant">
+        <.compact_table
+          id="items"
+          rows={Enum.with_index(@items)}
+          row_id={&("item-" <> elem(&1, 0).id)}
+        >
+          <:col :let={{item, idx}} label="Name">
+            <%= if idx > 0 && Enum.at(@items, idx - 1).item_type_id == item.item_type_id do %>
+              <div class="text-gray-400">&nbsp&nbsp&nbsp&nbsp<%= item.name %></div>
+            <% else %>
+              <%= item.name %>
+            <% end %>
+          </:col>
+          <:col :let={{item, _}} label="Quant">
             <%= item.quantity %>
           </:col>
-          <:col :let={item} label="Unit">
+          <:col :let={{item, _}} label="Unit">
             <%= item.unit %>
           </:col>
-          <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
+          <:col :let={{item, _}} label="Days Left"><%= days_left(item.expiration) %></:col>
         </.compact_table>
       <% else %>
-        <.table id="items" rows={@items} row_id={&("item-" <> &1.id)}>
-          <:col :let={item} label="Name"><%= item.name %></:col>
-          <:col :let={item} label="Quant">
+        <.table id="items" rows={Enum.with_index(@items)} row_id={&("item-" <> elem(&1, 0).id)}>
+          <:col :let={{item, idx}} label="Name">
+            <%= if idx > 0 && Enum.at(@items, idx - 1).item_type_id == item.item_type_id do %>
+              <div class="text-gray-400">&nbsp&nbsp&nbsp&nbsp<%= item.name %></div>
+            <% else %>
+              <%= item.name %>
+            <% end %>
+          </:col>
+          <:col :let={{item, _}} label="Quant">
             <.small_form
               for={item.quantity_form}
               id={"quantity-form-" <> item.id}
@@ -108,7 +124,7 @@ defmodule PantryWeb.StockpileLive.Items do
               />
             </.small_form>
           </:col>
-          <:col :let={item} label="Unit">
+          <:col :let={{item, _}} label="Unit">
             <.form
               for={item.unit_form}
               id={"unit-form-" <> item.id}
@@ -126,7 +142,7 @@ defmodule PantryWeb.StockpileLive.Items do
               />
             </.form>
           </:col>
-          <:col :let={item} label="Expiration">
+          <:col :let={{item, _}} label="Expiration">
             <.form
               for={item.expiration_form}
               id={"expiration-form-" <> item.id}
@@ -144,8 +160,8 @@ defmodule PantryWeb.StockpileLive.Items do
               />
             </.form>
           </:col>
-          <:col :let={item} label="Days Left"><%= days_left(item.expiration) %></:col>
-          <:action :let={item}>
+          <:col :let={{item, _}} label="Days Left"><%= days_left(item.expiration) %></:col>
+          <:action :let={{item, _}}>
             <.link
               phx-disable-with="Deleting..."
               phx-target={@myself}
@@ -271,7 +287,24 @@ defmodule PantryWeb.StockpileLive.Items do
   end
 
   defp prepare_items_for_frontend(items) do
+    mapped =
+      Enum.reduce(items, %{}, fn item, acc ->
+        Map.update(acc, item.item_type_id, [item], &List.flatten(&1, [item]))
+      end)
+
+    {items, _} =
+      Enum.reduce(items, {[], mapped}, fn item, {all_items, mapped} ->
+        {items, mapped} =
+          case Map.get_and_update(mapped, item.item_type_id, fn _ -> :pop end) do
+            {nil, mapped} -> {[], mapped}
+            {items, mapped} -> {items, mapped}
+          end
+
+        {Enum.reverse(items) ++ all_items, mapped}
+      end)
+
     items
+    |> Enum.reverse()
     |> Enum.map(fn item ->
       item
       |> Map.put(:quantity_form, to_form(Item.update_quantity(item, item.quantity)))
