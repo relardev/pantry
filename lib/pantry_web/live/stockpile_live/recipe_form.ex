@@ -54,7 +54,15 @@ defmodule PantryWeb.Stockpile.RecipeForm do
           label="Name"
           id="first-input"
           phx-debounce="200"
-        /> Ingredients
+        />
+        <.input
+          field={@form[:portions]}
+          placeholder="1.0"
+          type="number"
+          label="Portions"
+          phx-debounce="200"
+        />
+        <h1><b>Ingredients</b></h1>
         <datalist id="ingredientOptions">
           <%= for ingredient <- @filtered_ingredients do %>
             <option value={ingredient}><%= ingredient %></option>

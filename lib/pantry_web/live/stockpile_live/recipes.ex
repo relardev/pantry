@@ -73,6 +73,7 @@ defmodule PantryWeb.StockpileLive.Recipes do
             <%= ing %> <br />
           <% end %>
         </:col>
+        <:col :let={recipe} label="Portions"><%= recipe.portions %></:col>
         <:action :let={recipe}>
           <.link
             phx-disable-with="Deleting..."
