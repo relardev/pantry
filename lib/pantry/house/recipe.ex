@@ -18,7 +18,7 @@ defmodule Pantry.House.Recipe do
   def changeset(recipe, attrs) do
     recipe
     |> cast(attrs, [:name, :instructions, :household_id])
-    |> validate_required([:name, :instructions, :household_id])
+    |> validate_required([:name, :household_id])
     |> unique_constraint([:name, :household_id],
       name: "recipes_name_household_id_index"
     )
@@ -28,7 +28,7 @@ defmodule Pantry.House.Recipe do
   def validate_changeset(recipe, attrs) do
     recipe
     |> cast(attrs, [:name, :instructions])
-    |> validate_required([:name, :instructions])
+    |> validate_required([:name])
     |> cast_assoc(:ingredients,
       with: &Pantry.House.RecipeIngredient.validate_changeset/2,
       required: true

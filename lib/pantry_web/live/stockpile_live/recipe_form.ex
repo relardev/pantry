@@ -131,9 +131,7 @@ defmodule PantryWeb.Stockpile.RecipeForm do
         "change",
         %{
           "_target" => ["recipe", "ingredients", idx, "name"],
-          "recipe" => %{
-            "ingredients" => ingredients
-          }
+          "recipe" => %{"ingredients" => ingredients} = recipe_params
         },
         socket
       ) do
@@ -142,12 +140,18 @@ defmodule PantryWeb.Stockpile.RecipeForm do
       |> Map.get(idx)
       |> Map.get("name")
 
+    form =
+      socket.assigns.recipe
+      |> Recipe.changeset(recipe_params)
+      |> to_form(action: :validate)
+
     {:noreply,
      socket
      |> assign(
        filtered_ingredients:
          PantryWeb.Stockpile.ItemTypeHint.filter(socket.assigns.item_types, ingredient_name)
-     )}
+     )
+     |> assign(form: form)}
   end
 
   def handle_event(
@@ -212,7 +216,6 @@ defmodule PantryWeb.Stockpile.RecipeForm do
   end
 
   def handle_event("change", %{"recipe" => recipe_params}, socket) do
-    dbg()
     changeset = Recipe.validate_changeset(socket.assigns.recipe, recipe_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
