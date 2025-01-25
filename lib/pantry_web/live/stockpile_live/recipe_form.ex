@@ -154,19 +154,19 @@ defmodule PantryWeb.Stockpile.RecipeForm do
         "change",
         %{
           "_target" => ["recipe", "ingredients", idx, "quantity"],
-          "recipe" => %{
-            "ingredients" => ingredients
-          }
+          "recipe" => %{"ingredients" => ingredients} = recipe_params
         },
-        socket
+        %{assigns: %{recipe: recipe}} = socket
       ) do
     ingredients = unpack_quantity_for(ingredients, idx)
+    updated_recipe_params = Map.put(recipe_params, "ingredients", ingredients)
 
-    changeset = Recipe.validate_changeset(socket.assigns.recipe, %{"ingredients" => ingredients})
+    form =
+      recipe
+      |> Recipe.changeset(updated_recipe_params)
+      |> to_form(action: :validate)
 
-    {:noreply,
-     socket
-     |> assign(form: to_form(changeset, action: :validate))}
+    {:noreply, assign(socket, form: form)}
   end
 
   def handle_event("change", %{"recipe" => %{"ingredients" => ["new"]}}, socket) do
@@ -212,6 +212,7 @@ defmodule PantryWeb.Stockpile.RecipeForm do
   end
 
   def handle_event("change", %{"recipe" => recipe_params}, socket) do
+    dbg()
     changeset = Recipe.validate_changeset(socket.assigns.recipe, recipe_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
