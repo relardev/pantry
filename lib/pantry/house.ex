@@ -12,6 +12,7 @@ defmodule Pantry.House do
   alias Pantry.House.ItemType
   alias Pantry.House.Recipe
   alias Pantry.House.RecipeIngredient
+  alias Pantry.House.ShoppingList
 
   @doc """
   Returns the list of households.
@@ -48,10 +49,13 @@ defmodule Pantry.House do
     recipes_query = from(r in Recipe, order_by: r.inserted_at)
     recipe_ingredients_query = from(ri in RecipeIngredient, order_by: ri.id)
 
+    shopping_list_query = from(sl in ShoppingList, order_by: sl.inserted_at)
+
     Household
     |> preload([
       :users,
       recipes: ^{recipes_query, [ingredients: recipe_ingredients_query]},
+      shopping_lists: ^shopping_list_query,
       items: ^items_query,
       item_types: ^item_types_query
     ])

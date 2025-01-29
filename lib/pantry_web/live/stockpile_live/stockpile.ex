@@ -143,6 +143,15 @@ defmodule PantryWeb.StockpileLive do
             item_types={household.item_types}
           />
         <% end %>
+        <%= if @live_action == :shopping_list do %>
+          <.live_component
+            module={PantryWeb.StockpileLive.ShoppingLists}
+            id="shopping_list"
+            household_id={household.id}
+            lists={household.shopping_lists}
+            item_types={household.item_types}
+          />
+        <% end %>
       </div>
     </.async_result>
     """
