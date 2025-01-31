@@ -77,6 +77,17 @@ defmodule Pantry.Stockpile.Household.Server do
     )
   end
 
+  def create_shopping_list(id) do
+    GenServer.cast(Pantry.Stockpile.HouseholdRegistry.via(id), :create_shopping_list)
+  end
+
+  def delete_shopping_list(id, shopping_list_id) do
+    GenServer.cast(
+      Pantry.Stockpile.HouseholdRegistry.via(id),
+      {:delete_shopping_list, shopping_list_id}
+    )
+  end
+
   def supervisor_spec() do
     {DynamicSupervisor, name: Pantry.Stockpile.HouseholdSupervisor, strategy: :one_for_one}
   end
@@ -194,6 +205,28 @@ defmodule Pantry.Stockpile.Household.Server do
       end)
 
     household = Map.put(household, :item_types, item_types)
+    broadcast_update(household)
+
+    {:noreply, household}
+  end
+
+  def handle_cast(:create_shopping_list, household) do
+    {:ok, shopping_list} = Pantry.House.create_shopping_list(%{household_id: household.id})
+
+    shopping_lists = household.shopping_lists ++ [shopping_list]
+    household = Map.put(household, :shopping_lists, shopping_lists)
+
+    broadcast_update(household)
+    {:noreply, household}
+  end
+
+  def handle_cast({:delete_shopping_list, shopping_list_id}, household) do
+    {:ok, _} = Pantry.House.delete_shopping_list(shopping_list_id)
+
+    shopping_lists =
+      Enum.reject(household.shopping_lists, fn sl -> sl.id == shopping_list_id end)
+
+    household = Map.put(household, :shopping_lists, shopping_lists)
     broadcast_update(household)
 
     {:noreply, household}

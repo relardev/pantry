@@ -392,6 +392,16 @@ defmodule Pantry.House do
     |> Repo.insert()
   end
 
+  def create_shopping_list(attrs) do
+    %ShoppingList{}
+    |> ShoppingList.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def delete_shopping_list(id) do
+    Repo.delete(%ShoppingList{id: id})
+  end
+
   def update_recipe(recipe, attrs) do
     recipe
     |> Recipe.changeset(attrs)

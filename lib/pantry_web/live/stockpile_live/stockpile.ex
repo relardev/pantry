@@ -88,7 +88,7 @@ defmodule PantryWeb.StockpileLive do
 
   defp navigation(current) do
     [
-      %{url: "/app", label: "Overview", active: current == :overview},
+      # %{url: "/app", label: "Overview", active: current == :overview},
       %{url: "/app/items", label: "Items", active: current == :items},
       %{url: "/app/item_types", label: "Item Types", active: current == :item_types},
       %{url: "/app/recipes", label: "Recipes", active: current == :recipes},
@@ -148,6 +148,7 @@ defmodule PantryWeb.StockpileLive do
             module={PantryWeb.StockpileLive.ShoppingLists}
             id="shopping_list"
             household_id={household.id}
+            shopping_lists={household.shopping_lists}
             lists={household.shopping_lists}
             item_types={household.item_types}
           />

@@ -15,6 +15,5 @@ defmodule Pantry.House.ShoppingList do
   def changeset(shopping_list, attrs) do
     shopping_list
     |> cast(attrs, [:name])
-    |> validate_required([:name])
   end
 end
