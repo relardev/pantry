@@ -13,6 +13,7 @@ defmodule Pantry.House do
   alias Pantry.House.Recipe
   alias Pantry.House.RecipeIngredient
   alias Pantry.House.ShoppingList
+  alias Pantry.House.ShoppingListItem
 
   @doc """
   Returns the list of households.
@@ -50,12 +51,21 @@ defmodule Pantry.House do
     recipe_ingredients_query = from(ri in RecipeIngredient, order_by: ri.id)
 
     shopping_list_query = from(sl in ShoppingList, order_by: sl.inserted_at)
+    shopping_list_items_query = from(sli in ShoppingListItem, order_by: sli.id)
 
     Household
     |> preload([
       :users,
-      recipes: ^{recipes_query, [ingredients: recipe_ingredients_query]},
-      shopping_lists: ^shopping_list_query,
+      recipes:
+        ^{
+          recipes_query,
+          [ingredients: recipe_ingredients_query]
+        },
+      shopping_lists:
+        ^{
+          shopping_list_query,
+          [items: shopping_list_items_query]
+        },
       items: ^items_query,
       item_types: ^item_types_query
     ])
@@ -400,6 +410,12 @@ defmodule Pantry.House do
 
   def delete_shopping_list(id) do
     Repo.delete(%ShoppingList{id: id})
+  end
+
+  def update_shopping_list(shopping_list, attrs) do
+    shopping_list
+    |> ShoppingList.changeset(attrs)
+    |> Repo.update()
   end
 
   def update_recipe(recipe, attrs) do

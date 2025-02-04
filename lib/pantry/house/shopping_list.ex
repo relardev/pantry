@@ -4,9 +4,11 @@ defmodule Pantry.House.ShoppingList do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  schema "shopping_list" do
+  schema "shopping_lists" do
     field :name, :string
-    field :household_id, :binary_id
+
+    has_many :items, Pantry.House.ShoppingListItem, on_replace: :delete_if_exists
+    belongs_to :household, Pantry.House.Household
 
     timestamps(type: :utc_datetime)
   end
@@ -14,6 +16,20 @@ defmodule Pantry.House.ShoppingList do
   @doc false
   def changeset(shopping_list, attrs) do
     shopping_list
+    |> cast(attrs, [:name, :household_id])
+    |> validate_required([:household_id])
+    |> cast_assoc(
+      :items,
+      with: &Pantry.House.ShoppingListItem.changeset/2
+    )
+  end
+
+  def validate_changeset(shopping_list, attrs) do
+    shopping_list
     |> cast(attrs, [:name])
+    |> cast_assoc(
+      :items,
+      with: &Pantry.House.ShoppingListItem.validate_changeset/2
+    )
   end
 end
