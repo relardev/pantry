@@ -90,7 +90,7 @@ defmodule PantryWeb.Router do
 
     live_session :house,
       on_mount: [{PantryWeb.UserAuth, :ensure_authenticated}] do
-      live "/app", StockpileLive, :overview
+      live "/app", StockpileLive, :items
       live "/app/items", StockpileLive, :items
       live "/app/item_types", StockpileLive, :item_types
       live "/app/recipes", StockpileLive, :recipes
