@@ -91,8 +91,8 @@ defmodule PantryWeb.StockpileLive do
       # %{url: "/app", label: "Overview", active: current == :overview},
       %{url: "/app/items", label: "Items", active: current == :items},
       %{url: "/app/item_types", label: "Item Types", active: current == :item_types},
-      %{url: "/app/recipes", label: "Recipes", active: current == :recipes},
-      %{url: "/app/shopping-list", label: "Shopping List", active: current == :shopping_list}
+      %{url: "/app/recipes", label: "Recipes", active: current == :recipes}
+      # %{url: "/app/shopping-list", label: "Shopping List", active: current == :shopping_list}
     ]
   end
 
